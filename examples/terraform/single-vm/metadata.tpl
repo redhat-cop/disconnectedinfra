@@ -10,5 +10,5 @@ network:
       nameservers:
         addresses:
         - 1.1.1.1
-local-hostname: testme.disconnect.blue
-instance-id: testme.disconnect.blue
+local-hostname: testme.infrabuild.xyz
+instance-id: testme.infrabuild.xyz

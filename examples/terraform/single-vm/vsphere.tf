@@ -61,7 +61,7 @@ resource "vsphere_virtual_machine" "linux_cloudinit" {
    
   tags                    = [vsphere_tag.tag.id]
 
-  folder                  = "DISCONNECT.BLUE"
+  folder                  = var.folder
 
   network_interface {
     network_id          = data.vsphere_network.network.id
