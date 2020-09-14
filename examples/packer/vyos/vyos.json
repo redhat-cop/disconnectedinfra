@@ -1,0 +1,104 @@
+{
+  "variables": {
+    "iso_url": "https://file.server.net/isos/vyos-1.3-rolling-202008250118-amd64.iso",
+    "iso_file": "./vyos-1.3-rolling-202008250118-amd64.iso",
+    "cpu": "2",
+    "mem": "4096",
+    "vm-disk-size": "4096",
+    "vm-name": "vyos-packer-{{ isotime \"20060102\" }}",
+    "vsphere-cluster": "BUILD",
+    "vsphere-datacenter": "Datacenter",
+    "vsphere-datastore": "DATASTORE01",
+    "vsphere-folder": "Templates",
+    "vsphere-network": "BUILDNET",
+    "vsphere-password": "VspherePassword1234$",
+    "vsphere-server": "vsphere.infrabuild.xyz",
+    "vsphere-user": "administrator@vsphere.infrabuild.xyz"
+  },
+
+  "builders": [
+    {
+      "type": "vsphere-iso",
+      "CPUs": "{{user `cpu`}}",
+      "RAM": "{{user `mem`}}",
+      "RAM_reserve_all": true,
+      "cluster": "{{user `vsphere-cluster`}}",
+      "convert_to_template": "true",
+      "datacenter": "{{user `vsphere-datacenter`}}",
+      "datastore": "{{user `vsphere-datastore`}}",
+      "disk_controller_type": "pvscsi",
+      "firmware": "bios",
+      "boot_wait": "5s",
+      "boot_command":
+      [
+        "<enter><wait3m>",
+        "vyos<enter><wait5>",
+        "vyos<wait><enter><wait10>",
+        "install image<enter><wait5>",
+        "<enter><wait5>",
+        "<enter><wait5>",
+        "<enter><wait5>",
+        "Yes<enter><wait5>",
+        "<enter><wait10>",
+        "<enter><wait5>",
+        "<enter><wait5>",
+        "vyos<enter><wait5>",
+        "vyos<enter><wait10>",
+        "<enter><wait10><wait10>",
+        "reboot<enter><wait5>",
+        "Yes<enter><wait3m>",
+        "vyos<enter><wait5>",
+        "vyos<enter><wait10>",
+        "configure<enter><wait5>",
+        "set interface ethernet eth0 address dhcp<enter><wait5>",
+        "set service ssh<enter><wait5>",
+        "commit<enter><wait5>",
+        "save<enter><wait5>",
+        "delete interface ethernet eth0 hw-id<enter><wait5>",
+        "commit<enter><wait5>",
+        "save<enter><wait5>",
+        "exit<enter><wait5>",
+        "sudo bash -c 'echo deb https://deb.debian.org/debian buster main contrib non-free > /etc/apt/sources.list.d/buster.list'<enter><wait5>",
+        "sudo bash -c 'echo nameserver 1.1.1.1 >> /etc/resolv.conf'<enter><wait5>",
+        "sudo apt update<enter><wait5>",
+        "sudo apt install -y cloud-init open-vm-tools python3-pip python3-dev build-essential<enter><wait40>",
+        "sudo pip3 install wheel<enter><wait15>",
+        "sudo bash -c 'curl -sSL https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo/master/install.sh | bash -'<enter><wait15>",
+        "sudo bash -c 'curl -s https://install.zerotier.com | sudo bash'<enter><wait3m>"
+      ],
+      "folder": "{{user `vsphere-folder`}}",
+      "guest_os_type": "centos7_64guest",
+      "insecure_connection": "true",
+      "iso_checksum": "none",
+      "iso_urls": [
+        "{{ user `iso_file` }}",
+        "{{ user `iso_url` }}"
+      ],
+      "network_adapters": [
+        {
+          "network": "{{user `vsphere-network`}}",
+          "mac_address": "00:50:56:9e:46:81",
+          "network_card": "vmxnet3"
+        }
+      ],
+      "notes": "Build via Packer",
+      "password": "{{user `vsphere-password`}}",
+      "storage": [
+        {
+          "disk_size": "{{user `vm-disk-size`}}",
+          "disk_thin_provisioned": true
+        }
+      ],
+      "username": "{{user `vsphere-user`}}",
+      "vcenter_server": "{{user `vsphere-server`}}",
+      "vm_name": "{{user `vm-name`}}",
+      "ssh_username": "vyos",
+      "ssh_password": "vyos",
+      "boot_order": "disk,cdrom,floppy",
+      "export": {
+        "force": true,
+        "output_directory": "./output_vsphere"
+      }
+    }
+  ]
+}
