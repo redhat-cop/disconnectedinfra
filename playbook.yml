@@ -1,0 +1,6 @@
+---
+- hosts: packer-vyos
+  become: true
+
+  roles:
+  - image_creation

@@ -1,0 +1,31 @@
+---
+- name: Create build directory
+  file:
+    path: /build
+    state: directory
+    mode: '01777'
+
+- name: Ensure build directory is mounted
+  mount:
+    name: /build
+    src: tmpfs
+    fstype: tmpfs
+    opts: size=512m
+    state: mounted
+
+- name: Copy packer file
+  copy: 
+    src: vyos.json
+    dest: /build/vyos.json
+    mode: 0644
+
+- name: Copy var file to build system
+  template:
+    src: var-file.json
+    dest: /build/var-file.json
+    mode: 0644
+
+- name: Run packer
+  shell: packer build -var-file=var-file.json vyos.json
+  args:
+    chdir: /build

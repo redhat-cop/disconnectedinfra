@@ -1,0 +1,11 @@
+{
+  "iso_url": "{{ iso_url }}",
+  "vsphere_cluster": "{{ vsphere_cluster }}",
+  "vsphere_datacenter": "{{ vsphere_datacenter }}",
+  "vsphere_datastore": "{{ vsphere_datastore }}",
+  "vsphere_folder": "{{ vsphere_folder }}",
+  "vsphere_network": "{{ vsphere_network }}",
+  "vsphere_password": "{{ vsphere_password }}",
+  "vsphere_server": "{{ vsphere_server }}",
+  "vsphere_user": "{{ vsphere_user }}"
+}
