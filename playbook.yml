@@ -1,6 +1,5 @@
 ---
-- hosts: packer-vyos
-  become: true
+- hosts: build
 
   roles:
   - image_creation
