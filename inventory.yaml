@@ -1,0 +1,39 @@
+all:
+  children:
+    build:
+      hosts:
+        localhost:
+          ansible_connection: local
+      vars:
+        config_directory: /build_config
+        artifact_directory: /build_artifact
+        vsphere:
+          vcenter_server: 192.168.5.1
+          cluster: Cluster
+          datacenter: Datacenter
+          datastore: datastore1
+          folder: Templates
+          network: VM Network
+          username: administrator@vsphere.infrabuild.xyz
+          password: BadPassword1234$
+          esxi_hostname: 192.168.5.2
+        env:
+          VMWARE_USER: "{{ vsphere.username }}"
+          VMWARE_PASSWORD: "{{ vsphere.password }}"
+          RHSM_PASSWORD: "{{ lookup('env', 'RHSM_PASSWORD') }}"
+          PACKER_CACHE_DIR: "{{ artifact_directory }}"
+        override:
+          rhel7:
+            variables:
+              rhsm_username: "{{ lookup('env','RHSM_USERNAME') }}"
+              rhsm_pool_id: "{{ lookup('env','RHSM_POOL_ID') }}"
+        build:
+        - build_name: vyos
+          should_build: build
+          packer_file: "{{ vyos }}"
+        - build_name: rhel7
+          should_build: build
+          packer_file: "{{ rhel7 | combine(override.rhel7,recursive=True) }}"
+          files:
+          - ks.cfg
+          - playbook.yml

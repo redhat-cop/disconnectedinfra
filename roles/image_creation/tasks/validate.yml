@@ -1,0 +1,75 @@
+---
+- include_vars:
+    dir: vars
+
+- name: Deploy OVF Templates
+  community.vmware.vmware_deploy_ovf:
+    folder: "/{{ vsphere.datacenter }}/vm/{{ vsphere.folder }}"
+    hostname: "{{ vsphere.vcenter_server }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    datastore: "{{ vsphere.datastore }}"
+    cluster: "{{ vsphere.cluster }}"
+    name: "{{ item.build_name }}"
+    networks: "{u'VM Network':u'{{ vsphere.network }}'}"
+    validate_certs: no
+    power_on: no
+    ovf: "/build_artifact/{{ item.build_name }}-290920.ovf"
+  loop: "{{ active_build }}"
+  loop_control:
+    label: "{{ item.build_name }}"
+
+- name: Create a virtual machine on given ESXi hostname
+  community.vmware.vmware_guest:
+    hostname: "{{ vsphere.vcenter_server }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    folder: "{{ vsphere.folder }}"
+    validate_certs: no
+    name: "{{ item.build_name }}_test"
+    template: "{{ item.build_name }}"
+    state: poweredon
+    force: true
+    hardware:
+      memory_mb: 4096
+      num_cpus: 2
+      scsi: paravirtual
+    networks:
+    - name: "{{ vsphere.network }}"
+      mac: "{{ '00:50:56:A8' | random_mac }}"
+      device_type: vmxnet3
+  delegate_to: localhost
+  loop: "{{ active_build }}"
+  loop_control:
+    label: "{{ item.build_name }}"
+
+- pause:
+
+- name: Delete a virtual machine on given ESXi hostname
+  community.vmware.vmware_guest:
+    hostname: "{{ vsphere.vcenter_server }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    folder: "{{ vsphere.folder }}"
+    validate_certs: no
+    name: "{{ item.build_name }}_test"
+    template: "{{ item.build_name }}"
+    state: absent
+    force: true
+    hardware:
+      memory_mb: 4096
+      num_cpus: 2
+      scsi: paravirtual
+    networks:
+    - name: "{{ vsphere.network }}"
+      mac: "{{ '00:50:56:A8' | random_mac }}"
+      device_type: vmxnet3
+  delegate_to: localhost
+  loop: "{{ active_build }}"
+  loop_control:
+    label: "{{ item.build_name }}"

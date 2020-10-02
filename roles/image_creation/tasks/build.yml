@@ -1,0 +1,74 @@
+---
+- include_vars:
+    dir: vars
+
+- name: Create build and artifact directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '01777'
+  loop:
+  - "{{ config_directory }}"
+  - "{{ artifact_directory }}"
+  become: true
+
+- name: Ensure build temp filesystem is mounted
+  mount:
+    name: "{{ config_directory }}"
+    src: tmpfs
+    fstype: tmpfs
+    opts: size=512m
+    state: mounted
+  become: true
+
+- name: Copy packer file
+  copy: 
+    content: "{{ item.packer_file }}"
+    dest: "{{ config_directory }}/{{ item.build_name }}.json"
+    mode: 0644
+  loop: "{{ active_config }}"
+  loop_control:
+    label: "{{ item.build_name }}"
+
+- name: Copy supporting build files (i.e. configs, Kickstart)
+  template:
+    src: "{{ item }}"
+    dest: "{{ config_directory }}/{{ item }}"
+    mode: 0644
+  loop: "{{ config_files }}"
+  
+- name: Run packer
+  shell: "packer build -force {{ item.build_name }}.json"
+  args:
+    chdir: "{{ config_directory }}"
+  environment: "{{ env }}"
+  loop: "{{ active_build }}"
+  loop_control:
+    label: "{{ item.build_name }}"
+  async: 1800
+  poll: 0
+  register: builds_running
+
+- name: Check for build completion
+  async_status:
+    jid: "{{ item.ansible_job_id }}" 
+  loop: "{{ builds_running.results }}"
+  register: builds_status
+  until: builds_status.finished
+  retries: 600
+
+- name: Convert OVF to OVA
+  shell: "ovftool --overwrite {{ artifact_directory }}/{{ item.packer_file.variables.vm_name }}-{{ item.packer_file.variables.ddmmyy }}.ovf {{artifact_directory }}/{{ item.packer_file.variables.vm_name }}-{{ item.packer_file.variables.ddmmyy }}.ova"
+  args:
+    chdir: "{{ config_directory }}"
+  environment: "{{ env }}"
+  loop: "{{ active_build }}"
+  loop_control:
+    label: "{{ item.build_name }}"
+
+- name: Symlink build to the latest tag
+  file:
+    src: "{{ artifact_directory }}/{{ item.packer_file.variables.vm_name }}-{{ item.packer_file.variables.ddmmyy }}.ova"
+    dest: "{{ artifact_directory }}/{{ item.build_name }}-latest.ova"
+    state: link
+  loop: "{{ active_build }}"

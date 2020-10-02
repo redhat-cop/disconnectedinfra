@@ -1,0 +1,90 @@
+vyos:
+  variables:
+    username: !unsafe '{{ env `VMWARE_USER` }}'
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}" 
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    network: "{{ vsphere.network }}"
+    vm_name: vyos
+    ddmmyy: "{{ lookup('pipe','date +%d%m%y') }}"
+    ssh_username: vyos
+    ssh_password: vyos
+    iso_url: http://artifact.infrabuild.xyz/iso/vyos-1.3-rolling-202008250118-amd64.iso
+    output_directory: "{{ artifact_directory }}"
+  sensitive-variables:
+    - password
+  builders:
+    - type: vsphere-iso
+      CPUs: 2
+      RAM: 4096
+      RAM_reserve_all: true
+      username: !unsafe '{{ user `username` }}'
+      password: !unsafe '{{ user `password` }}'
+      vcenter_server: !unsafe '{{ user `vcenter_server` }}'
+      cluster: !unsafe '{{ user `cluster` }}'
+      datacenter: !unsafe '{{ user `datacenter` }}'
+      datastore: !unsafe '{{ user `datastore` }}'
+      folder: !unsafe '{{ user `folder` }}'
+      disk_controller_type: pvscsi
+      firmware: bios
+      boot_wait: 5s
+      boot_order: disk,cdrom,floppy
+      boot_command:
+        - <enter><wait3m>
+        - vyos<enter><wait5>
+        - vyos<wait><enter><wait10>
+        - install image<enter><wait5>
+        - <enter><wait5>
+        - <enter><wait5>
+        - <enter><wait5>
+        - Yes<enter><wait5>
+        - <enter><wait10>
+        - <enter><wait5>
+        - <enter><wait5>
+        - vyos<enter><wait5>
+        - vyos<enter><wait10>
+        - <enter><wait10><wait10>
+        - reboot<enter><wait5>
+        - Yes<enter><wait3m>
+        - vyos<enter><wait5>
+        - vyos<enter><wait10>
+        - configure<enter><wait5>
+        - set interface ethernet eth0 address dhcp<enter><wait5>
+        - set service ssh<enter><wait5>
+        - commit<enter><wait5>
+        - save<enter><wait5>
+        - delete interface ethernet eth0 hw-id<enter><wait5>
+        - commit<enter><wait5>
+        - save<enter><wait5>
+        - exit<enter><wait5>
+        - sudo bash -c 'echo deb https://deb.debian.org/debian buster main contrib non-free > /etc/apt/sources.list.d/buster.list'<enter><wait5>
+        - sudo bash -c 'echo nameserver 1.1.1.1 >> /etc/resolv.conf'<enter><wait5>
+        - sudo apt update<enter><wait5>
+        - sudo apt install -y cloud-init open-vm-tools python3-pip python3-dev build-essential<enter><wait40>
+        - sudo pip3 install wheel<enter><wait15>
+        - sudo bash -c 'curl -sSL https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo/master/install.sh | bash -'<enter><wait15>
+        - sudo bash -c 'curl -s https://install.zerotier.com | sudo bash'<enter><wait3m>
+      guest_os_type: ubuntu64Guest
+      insecure_connection: "true"
+      iso_checksum: none
+      iso_urls:
+      - !unsafe '{{ user `iso_url` }}'
+      network_adapters:
+        - network: !unsafe '{{ user `network` }}'
+          mac_address: "{{ '00:50:56:A8' | random_mac }}"
+          network_card: vmxnet3
+      vm_name: !unsafe '{{ user `vm_name` }}'
+      ssh_username: !unsafe '{{ user `ssh_username` }}'
+      ssh_password: !unsafe '{{ user `ssh_password` }}'
+      notes: !unsafe 'SSH Username {{ user `ssh_username` }}\nSSH Password {{ user `ssh_password` }}'
+      storage:
+        - disk_size: 16384
+          disk_thin_provisioned: true
+      export:
+        name: !unsafe '{{ user `vm_name` }}-{{ user `ddmmyy` }}'
+        force: true
+        output_directory: !unsafe '{{ user `output_directory` }}'
+        directory_permission: "0755"

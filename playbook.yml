@@ -2,4 +2,9 @@
 - hosts: build
 
   roles:
-  - image_creation
+  - role: image_creation
+    vars:
+      action: build
+  - role: image_creation
+    vars:
+      action: validate
