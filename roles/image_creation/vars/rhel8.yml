@@ -34,13 +34,11 @@ rhel8:
       folder: !unsafe '{{ user `folder` }}'
       disk_controller_type: pvscsi
       firmware: bios
-      floppy_files:
-        - rhel8ks.cfg
       boot_wait: 10s
-      boot_order: disk,cdrom,floppy
+      boot_order: disk,cdrom
+      http_directory: http
       boot_command:
-        - <esc><wait>
-        - linux ks=hd:fd0:/rhel8ks.cfg<enter>
+      - !unsafe <tab> inst.sshd inst.text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort}}/rhel8ks.cfg<enter><wait>
       guest_os_type: centos7_64guest
       insecure_connection: "true"
       iso_checksum: none
