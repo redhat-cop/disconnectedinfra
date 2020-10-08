@@ -23,39 +23,22 @@
 
 - name: Copy packer file
   copy: 
-    content: "{{ item.packer_file }}"
-    dest: "{{ config_directory }}/{{ item.build_name }}.json"
+    content: "{{ packer_all }}"
+    dest: "{{ config_directory }}/packerall.json"
     mode: 0644
-  loop: "{{ active_config }}"
-  loop_control:
-    label: "{{ item.build_name }}"
 
 - name: Copy supporting build files (i.e. configs, Kickstart)
   template:
-    src: "{{ item }}"
-    dest: "{{ config_directory }}/{{ item }}"
+    src: "{{ item.src }}"
+    dest: "{{ config_directory }}/{{ item.dest }}"
     mode: 0644
   loop: "{{ config_files }}"
   
 - name: Run packer
-  shell: "packer build -force {{ item.build_name }}.json"
+  shell: "packer build -force packerall.json"
   args:
     chdir: "{{ config_directory }}"
   environment: "{{ env }}"
-  loop: "{{ active_build }}"
-  loop_control:
-    label: "{{ item.build_name }}"
-  async: 1800
-  poll: 0
-  register: builds_running
-
-- name: Check for build completion
-  async_status:
-    jid: "{{ item.ansible_job_id }}" 
-  loop: "{{ builds_running.results }}"
-  register: builds_status
-  until: builds_status.finished
-  retries: 600
 
 - name: Convert OVF to OVA
   shell: "ovftool --overwrite {{ artifact_directory }}/{{ item.packer_file.variables.vm_name }}-{{ item.packer_file.variables.ddmmyy }}.ovf {{artifact_directory }}/{{ item.packer_file.variables.vm_name }}-{{ item.packer_file.variables.ddmmyy }}.ova"

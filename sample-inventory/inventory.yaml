@@ -22,18 +22,34 @@ all:
           VMWARE_PASSWORD: "{{ vsphere.password }}"
           RHSM_PASSWORD: "{{ lookup('env', 'RHSM_PASSWORD') }}"
           PACKER_CACHE_DIR: "{{ artifact_directory }}"
+          PACKER_LOG: 1
+          PACKER_LOG_PATH: "{{ artifact_directory }}/packerlog.txt"
         override:
           rhel7:
             variables:
               rhsm_username: "{{ lookup('env','RHSM_USERNAME') }}"
               rhsm_pool_id: "{{ lookup('env','RHSM_POOL_ID') }}"
+          rhel8:
+            variables:
+              rhsm_username: "{{ lookup('env','RHSM_USERNAME') }}"
+              rhsm_pool_id: "{{ lookup('env','RHSM_POOL_ID') }}"
         build:
         - build_name: vyos
-          should_build: build
+          should_build: config
           packer_file: "{{ vyos }}"
         - build_name: rhel7
-          should_build: build
+          should_build: config
           packer_file: "{{ rhel7 | combine(override.rhel7,recursive=True) }}"
           files:
-          - ks.cfg
-          - playbook.yml
+          - src: ks.cfg
+            dest: ks.cfg
+          - src: playbook.yml
+            dest: playbook.yml
+        - build_name: rhel8
+          should_build: config
+          packer_file: "{{ rhel8 | combine(override.rhel8,recursive=True) }}"
+          files:
+          - src: rhel8ks.cfg
+            dest: http/rhel8ks.cfg
+          - src: playbook.yml
+            dest: playbook.yml

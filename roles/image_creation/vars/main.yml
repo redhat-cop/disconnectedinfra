@@ -1,3 +1,0 @@
-active_config: "{{ build | selectattr('should_build', 'in', '[config,build]') | list }}" 
-active_build: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"
-config_files: "{{ active_config | selectattr('files', 'defined') | map(attribute='files') | list | flatten | unique }}"

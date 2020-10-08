@@ -8,16 +8,17 @@ vyos:
     datastore: "{{ vsphere.datastore }}"
     folder: "{{ vsphere.folder }}"
     network: "{{ vsphere.network }}"
-    vm_name: vyos
+    vyos_vm_name: vyos
     ddmmyy: "{{ lookup('pipe','date +%d%m%y') }}"
-    ssh_username: vyos
-    ssh_password: vyos
-    iso_url: http://artifact.infrabuild.xyz/iso/vyos-1.3-rolling-202008250118-amd64.iso
+    vyos_ssh_username: vyos
+    vyos_ssh_password: vyos
+    vyos_iso_url: http://artifact.infrabuild.xyz/iso/vyos-1.3-rolling-202008250118-amd64.iso
     output_directory: "{{ artifact_directory }}"
   sensitive-variables:
     - password
   builders:
     - type: vsphere-iso
+      name: !unsafe '{{ user `vyos_vm_name` }}'
       CPUs: 2
       RAM: 4096
       RAM_reserve_all: true
@@ -71,20 +72,20 @@ vyos:
       insecure_connection: "true"
       iso_checksum: none
       iso_urls:
-      - !unsafe '{{ user `iso_url` }}'
+      - !unsafe '{{ user `vyos_iso_url` }}'
       network_adapters:
         - network: !unsafe '{{ user `network` }}'
           mac_address: "{{ '00:50:56:A8' | random_mac }}"
           network_card: vmxnet3
-      vm_name: !unsafe '{{ user `vm_name` }}'
-      ssh_username: !unsafe '{{ user `ssh_username` }}'
-      ssh_password: !unsafe '{{ user `ssh_password` }}'
-      notes: !unsafe 'SSH Username {{ user `ssh_username` }}\nSSH Password {{ user `ssh_password` }}'
+      vm_name: !unsafe '{{ user `vyos_vm_name` }}'
+      ssh_username: !unsafe '{{ user `vyos_ssh_username` }}'
+      ssh_password: !unsafe '{{ user `vyos_ssh_password` }}'
+      notes: !unsafe 'SSH Username {{ user `vyos_ssh_username` }}\nSSH Password {{ user `vyos_ssh_password` }}'
       storage:
         - disk_size: 16384
           disk_thin_provisioned: true
       export:
-        name: !unsafe '{{ user `vm_name` }}-{{ user `ddmmyy` }}'
+        name: !unsafe '{{ user `vyos_vm_name` }}-{{ user `ddmmyy` }}'
         force: true
         output_directory: !unsafe '{{ user `output_directory` }}'
         directory_permission: "0755"

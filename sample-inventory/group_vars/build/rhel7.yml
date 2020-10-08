@@ -8,11 +8,11 @@ rhel7:
     datastore: "{{ vsphere.datastore }}"
     folder: "{{ vsphere.folder }}"
     network: "{{ vsphere.network }}"
-    vm_name: rhel7
+    rhel7_vm_name: rhel7
     ddmmyy: "{{ lookup('pipe','date +%d%m%y') }}"
-    ssh_username: root
-    ssh_password: thisisabadpassword
-    iso_url: http://artifact.infrabuild.xyz/iso/rhel-server-7.8-x86_64-dvd.iso
+    rhel7_ssh_username: root
+    rhel7_ssh_password: thisisabadpassword
+    rhel7_iso_url: http://artifact.infrabuild.xyz/iso/rhel-server-7.8-x86_64-dvd.iso
     rhsm_username: rhsmusername
     rhsm_password: !unsafe '{{ env `RHSM_PASSWORD` }}'
     rhsm_pool_id: uuidforpoolid
@@ -22,6 +22,7 @@ rhel7:
     - rhsm_password
   builders:
     - type: vsphere-iso
+      name: !unsafe '{{ user `rhel7_vm_name` }}'
       CPUs: 2
       RAM: 4096
       RAM_reserve_all: true
@@ -45,25 +46,27 @@ rhel7:
       insecure_connection: "true"
       iso_checksum: none
       iso_urls:
-      - !unsafe '{{ user `iso_url` }}'
+      - !unsafe '{{ user `rhel7_iso_url` }}'
       network_adapters:
         - network: !unsafe '{{ user `network` }}'
           mac_address: "{{ '00:50:56:A8' | random_mac }}"
           network_card: vmxnet3
-      vm_name: !unsafe '{{ user `vm_name` }}'
-      ssh_username: !unsafe '{{ user `ssh_username` }}'
-      ssh_password: !unsafe '{{ user `ssh_password` }}'
-      notes: !unsafe 'SSH Username {{ user `ssh_username` }}\nSSH Password {{ user `ssh_password` }}'
+      vm_name: !unsafe '{{ user `rhel7_vm_name` }}'
+      ssh_username: !unsafe '{{ user `rhel7_ssh_username` }}'
+      ssh_password: !unsafe '{{ user `rhel7_ssh_password` }}'
+      notes: !unsafe 'SSH Username {{ user `rhel7_ssh_username` }}\nSSH Password {{ user `rhel7_ssh_password` }}'
       storage:
         - disk_size: 40906
           disk_thin_provisioned: true
       export:
         force: true
         output_directory: !unsafe '{{ user `output_directory` }}'
-        name: !unsafe '{{ user `vm_name` }}-{{ user `ddmmyy` }}'
+        name: !unsafe '{{ user `rhel7_vm_name` }}-{{ user `ddmmyy` }}'
   provisioners:
   - type: ansible
     playbook_file: playbook.yml
     extra_arguments:
     - --extra-vars
     - !unsafe 'rhsm_username={{ user `rhsm_username` }} rhsm_password={{ user `rhsm_password` }} rhsm_pool_id={{ user `rhsm_pool_id` }}'
+    only:
+    - !unsafe '{{ user `rhel7_vm_name` }}'
