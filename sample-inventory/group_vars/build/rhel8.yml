@@ -22,7 +22,7 @@ rhel8:
   - rhsm_password
   builders:
   - type: vsphere-iso
-    name: !unsafe '{{ user `rhel8_vm_name` }}'
+    name: rhel8_vsphere_iso
     CPUs: 2
     RAM: 4096
     RAM_reserve_all: true
@@ -67,4 +67,4 @@ rhel8:
     - --extra-vars
     - !unsafe 'rhsm_username={{ user `rhsm_username` }} rhsm_password={{ user `rhsm_password` }} rhsm_pool_id={{ user `rhsm_pool_id` }}'
     only:
-    - !unsafe '{{ user `rhel8_vm_name` }}'
+    - rhel8_vsphere_iso

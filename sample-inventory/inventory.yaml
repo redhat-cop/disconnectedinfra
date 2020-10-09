@@ -35,7 +35,7 @@ all:
               rhsm_pool_id: "{{ lookup('env','RHSM_POOL_ID') }}"
         build:
         - build_name: vyos
-          should_build: config
+          should_build: build
           packer_file: "{{ vyos }}"
         - build_name: rhel7
           should_build: config
@@ -46,7 +46,7 @@ all:
           - src: playbook.yml
             dest: playbook.yml
         - build_name: rhel8
-          should_build: config
+          should_build: build
           packer_file: "{{ rhel8 | combine(override.rhel8,recursive=True) }}"
           files:
           - src: rhel8ks.cfg
