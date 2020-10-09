@@ -45,7 +45,7 @@
   args:
     chdir: "{{ config_directory }}"
   environment: "{{ env }}"
-  loop: "{{ active_build }}"
+  loop: "{{ active_build_dicts }}"
   loop_control:
     label: "{{ item.build_name }}"
 
@@ -54,4 +54,4 @@
     src: "{{ artifact_directory }}/{{ item.packer_file.variables.vm_name }}-{{ item.packer_file.variables.ddmmyy }}.ova"
     dest: "{{ artifact_directory }}/{{ item.build_name }}-latest.ova"
     state: link
-  loop: "{{ active_build }}"
+  loop: "{{ active_build_dicts }}"
