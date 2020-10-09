@@ -35,7 +35,7 @@
   loop: "{{ config_files }}"
   
 - name: Run packer
-  shell: "packer build -force packerall.json"
+  shell: "packer build -force -only={{ active_build }} packerall.json"
   args:
     chdir: "{{ config_directory }}"
   environment: "{{ env }}"
