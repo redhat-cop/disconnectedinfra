@@ -1,6 +1,6 @@
 active_config: "{{ build | selectattr('should_build', 'in', '[config,build]') | list }}" 
 active_build: "{{ active_config | selectattr('should_build', 'eq', 'build') | map(attribute='packer_file.builders') | flatten | map(attribute='name') | list | join(',') }}"
-active_build_dicts: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"
+active_build_dict: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"
 config_files: "{{ active_config | selectattr('files', 'defined') | map(attribute='files') | list | flatten | unique }}"
 poll_value: 5
 packer_variables: "{{ active_config | selectattr('packer_file.variables', 'defined') | map(attribute='packer_file.variables') | list | combine }}"

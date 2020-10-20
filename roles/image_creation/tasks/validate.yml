@@ -16,7 +16,7 @@
     validate_certs: no
     power_on: no
     ovf: "/build_artifact/{{ item.build_name }}-290920.ovf"
-  loop: "{{ active_build }}"
+  loop: "{{ active_build_dict }}"
   loop_control:
     label: "{{ item.build_name }}"
 
@@ -42,7 +42,7 @@
       mac: "{{ '00:50:56:A8' | random_mac }}"
       device_type: vmxnet3
   delegate_to: localhost
-  loop: "{{ active_build }}"
+  loop: "{{ active_build_dict }}"
   loop_control:
     label: "{{ item.build_name }}"
 
@@ -70,6 +70,6 @@
       mac: "{{ '00:50:56:A8' | random_mac }}"
       device_type: vmxnet3
   delegate_to: localhost
-  loop: "{{ active_build }}"
+  loop: "{{ active_build_dict }}"
   loop_control:
     label: "{{ item.build_name }}"
