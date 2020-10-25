@@ -1,0 +1,8 @@
+---
+- hosts: build
+
+  roles:
+  - role: iso_generation
+    vars:
+      dispatch: pfsense
+      iso_name: pfsense.iso
