@@ -1,0 +1,94 @@
+pfsense_iso_url: "{{ artifact_server }}/iso/pfSense-CE-2.4.5-RELEASE-p1-amd64.iso"
+pfsense_mac_address: "{{ '00:50:56:A8' | random_mac }}"
+pfsense_ssh_username: root
+pfsense_ssh_password: pfsense
+pfsense_vm_name: pfsense
+pfsense_files:
+- src: config.xml 
+  dest: http/config.xml
+
+pfsense_packer_file:
+  variables:
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+  sensitive-variables:
+  - password
+  builders:
+  - type: vsphere-iso
+    name: pfsense_vsphere_iso
+    CPUs: 2
+    RAM: 4096
+    RAM_reserve_all: true
+    username: "{{ vsphere.username }}"
+    password: !unsafe '{{ user `password` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}" 
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    http_directory: http
+    cd_files:
+    - http/config.xml
+    firmware: bios
+    boot_wait: 5s
+    boot_order: disk,cdrom,floppy
+    boot_command:
+    #copyright
+    - <wait2m><enter>
+    #Installpfsense
+    - <wait5><enter>
+    #keymap
+    - <wait5><enter>
+    #manual disk
+    - <wait5><down>
+    #Select manual
+    - <wait5><enter>
+    #select disk
+    - <wait5><left>
+    #Partition
+    - <wait5><enter>
+    #Use Entire Disk
+    - <wait5><enter>
+    #Use MBR
+    - <wait5><enter>
+    #Finish
+    - <wait5><enter>
+    #Commit
+    - <wait5><enter><wait45>
+    #Just reboot without a shell
+    - <enter><wait5>
+    #Acknowledge and wait for reboot
+    - <enter><wait2m>
+    #Don't set VLAN
+    - n<enter><wait5>
+    #Designate WAN interface as vmx0
+    - vmx0<enter><wait5>
+    #No LAN
+    - <enter><wait5>
+    #Proceed with changes
+    - y<enter><wait45>
+    - 8<enter><wait5>
+    - pkg install -y pfSense-pkg-Open-VM-Tools<enter><wait30>
+    - mount_cd9660 /dev/cd1 /mnt<enter><wait5>
+    - cp /mnt/config.xml /conf/config.xml<enter><wait5>
+    - reboot<enter>
+    guest_os_type: ubuntu64Guest
+    insecure_connection: "true"
+    iso_checksum: none
+    iso_urls:
+    - "{{ pfsense_iso_url }}"
+    network_adapters:
+    - network: "{{ vsphere.network }}"
+      mac_address: "{{ pfsense_mac_address }}"
+      network_card: vmxnet3
+    vm_name: "{{ pfsense_vm_name }}"
+    ssh_username: "{{ pfsense_ssh_username }}"
+    ssh_password: "{{ pfsense_ssh_password }}"
+    notes: "SSH Username {{ pfsense_ssh_username }}\nSSH Password {{ pfsense_ssh_password }}"
+    storage:
+    - disk_size: 16384
+      disk_thin_provisioned: true
+    export:
+      name: "{{ pfsense_vm_name }}-{{ ddmmyy }}"
+      force: true
+      output_directory: "{{ artifact_directory }}"
+      directory_permission: "0755"

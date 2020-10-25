@@ -1,0 +1,84 @@
+vyos_iso_url: http://artifact.infrabuild.xyz/iso/vyos-1.3-rolling-202008250118-amd64.iso
+vyos_mac_address: "{{ '00:50:56:A8' | random_mac }}"
+vyos_ssh_username: vyos
+vyos_ssh_password: vyos
+vyos_vm_name: vyos
+
+vyos_packer_file:
+  variables:
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+  sensitive-variables:
+  - password
+  builders:
+  - type: vsphere-iso
+    name: vyos_vsphere_iso
+    CPUs: 2
+    RAM: 4096
+    RAM_reserve_all: true
+    username: "{{ vsphere.username }}"
+    password: !unsafe '{{ user `password` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}" 
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    disk_controller_type: pvscsi
+    firmware: bios
+    boot_wait: 5s
+    boot_order: disk,cdrom,floppy
+    boot_command:
+    - <enter><wait3m>
+    - vyos<enter><wait5>
+    - vyos<wait><enter><wait10>
+    - install image<enter><wait5>
+    - <enter><wait5>
+    - <enter><wait5>
+    - <enter><wait5>
+    - Yes<enter><wait5>
+    - <enter><wait10>
+    - <enter><wait5>
+    - <enter><wait5>
+    - vyos<enter><wait5>
+    - vyos<enter><wait10>
+    - <enter><wait10><wait10>
+    - reboot<enter><wait5>
+    - Yes<enter><wait3m>
+    - vyos<enter><wait5>
+    - vyos<enter><wait10>
+    - configure<enter><wait5>
+    - set interface ethernet eth0 address dhcp<enter><wait5>
+    - set service ssh<enter><wait5>
+    - commit<enter><wait5>
+    - save<enter><wait5>
+    - delete interface ethernet eth0 hw-id<enter><wait5>
+    - commit<enter><wait5>
+    - save<enter><wait5>
+    - exit<enter><wait5>
+    - sudo bash -c 'echo deb https://deb.debian.org/debian buster main contrib non-free > /etc/apt/sources.list.d/buster.list'<enter><wait5>
+    - sudo bash -c 'echo nameserver 1.1.1.1 >> /etc/resolv.conf'<enter><wait5>
+    - sudo apt update<enter><wait5>
+    - sudo apt install -y cloud-init open-vm-tools python3-pip python3-dev build-essential<enter><wait40>
+    - sudo pip3 install wheel<enter><wait15>
+    - sudo bash -c 'curl -sSL https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo/master/install.sh | bash -'<enter><wait15>
+    - sudo bash -c 'curl -s https://install.zerotier.com | sudo bash'<enter><wait3m>
+    guest_os_type: ubuntu64Guest
+    insecure_connection: "true"
+    iso_checksum: none
+    iso_urls:
+    - "{{ vyos_iso_url }}"
+    network_adapters:
+    - network: "{{ vsphere.network }}"
+      mac_address: "{{ vyos_mac_address }}"
+      network_card: vmxnet3
+    vm_name: "{{ vyos_vm_name }}"
+    ssh_username: "{{ vyos_ssh_username }}"
+    ssh_password: "{{ vyos_ssh_password }}"
+    notes: "SSH Username {{ vyos_ssh_username }}\nSSH Password {{ vyos_ssh_password }}"
+    storage:
+    - disk_size: 16384
+      disk_thin_provisioned: true
+    export:
+      name: "{{ vyos_vm_name }}-{{ ddmmyy }}"
+      force: true
+      output_directory: "{{ artifact_directory }}"
+      directory_permission: "0755"
