@@ -1,0 +1,4 @@
+esxi_ks_name: ks_cust.cfg
+iso_name: custom_esxi.iso
+explode_directory: /build_explode
+artifact_directory: /build_artifact

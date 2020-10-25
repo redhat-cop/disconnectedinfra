@@ -1,0 +1,70 @@
+#Extracting to top level variables because including in a dictionary prevents these "plugin" variables 
+rhel7_iso_url: "{{ artifact_server }}/iso/rhel-server-7.8-x86_64-dvd.iso"
+rhel7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
+rhel7_ssh_username: root
+rhel7_ssh_password: BadPassword1234$
+rhel7_vm_name: rhel7
+rhel7_files:
+- src: ks.cfg
+  dest: ks.cfg
+- src: playbook.yml
+  dest: playbook.yml
+
+#Build the Packer file
+rhel7_packer_file:
+  variables:
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+    rhsm_password: !unsafe '{{ env `RHSM_PASSWORD` }}'
+  sensitive-variables:
+  - password
+  - rhsm_password
+  builders:
+  - type: vsphere-iso
+    name: rhel7_vsphere_iso
+    CPUs: 2
+    RAM: 4096
+    RAM_reserve_all: true
+    username: "{{ vsphere.username }}"
+    password: !unsafe '{{ user `password` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    disk_controller_type: pvscsi
+    firmware: bios
+    floppy_files:
+    - ks.cfg
+    boot_wait: 10s
+    boot_order: disk,cdrom,floppy
+    boot_command:
+    - <esc><wait>
+    - linux ks=hd:fd0:/ks.cfg<enter>
+    guest_os_type: centos7_64guest
+    insecure_connection: "true"
+    iso_checksum: none
+    iso_urls:
+    - "{{ rhel7_iso_url }}"
+    network_adapters:
+      - network: "{{ vsphere.network }}"
+        mac_address: "{{ rhel7_mac_address }}"
+        network_card: vmxnet3
+    vm_name: "{{ rhel7_vm_name }}"
+    ssh_username: "{{ rhel7_ssh_username }}"
+    ssh_password: "{{ rhel7_ssh_password }}"
+    notes: "SSH Username {{ rhel7_ssh_username }}\nSSH Password {{ rhel7_ssh_password }}"
+    storage:
+      - disk_size: 40906
+        disk_thin_provisioned: true
+    export:
+      force: true
+      output_directory: "{{ artifact_directory }}"
+      name: "{{ rhel7_vm_name }}-{{ ddmmyy }}"
+  provisioners:
+  - type: ansible
+    playbook_file: playbook.yml
+    extra_arguments:
+    - --extra-vars
+    - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"
+    only:
+    - rhel7_vsphere_iso

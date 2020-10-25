@@ -1,0 +1,71 @@
+### Sample for how to update config.boot for VYOS via VMWare Tools
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+  - name: copy file to vm
+    community.vmware.vmware_guest_file_operation:
+      hostname: 192.168.5.1
+      username: administrator@vsphere.infrabuild.xyz
+      password: BadPassword1234$
+      datacenter: Datacenter
+      vm_id: vyos_test
+      vm_username: vyos
+      vm_password: vyos
+      copy:
+          src: "files/config.boot"
+          dest: "/config/config.boot"
+          overwrite: True
+
+  - name: copy file to vm
+    community.vmware.vmware_guest_file_operation:
+      hostname: 192.168.5.1
+      username: administrator@vsphere.infrabuild.xyz
+      password: BadPassword1234$
+      datacenter: Datacenter
+      vm_id: vyos_test
+      vm_username: vyos
+      vm_password: vyos
+      copy:
+          src: "files/reload.sh"
+          dest: "/config/scripts/reload.sh"
+          overwrite: True
+
+  - name: Run command inside a virtual machine
+    community.vmware.vmware_vm_shell:
+      hostname: 192.168.5.1
+      username: administrator@vsphere.infrabuild.xyz
+      password: BadPassword1234$
+      datacenter: Datacenter
+      folder: /Datacenter/vm/Templates
+      vm_id: vyos_test
+      vm_username: vyos
+      vm_password: vyos
+      vm_shell: /usr/bin/chmod
+      vm_shell_args: '755 /config/scripts/reload.sh'
+      vm_shell_env:
+        - "PATH=/bin"
+        - "VAR=test"
+      vm_shell_cwd: "/tmp"
+    delegate_to: localhost
+    register: shell_command_output
+
+  - name: Run command inside a virtual machine
+    community.vmware.vmware_vm_shell:
+      hostname: 192.168.5.1
+      username: administrator@vsphere.infrabuild.xyz
+      password: BadPassword1234$
+      datacenter: Datacenter
+      folder: /Datacenter/vm/Templates
+      vm_id: vyos_test
+      vm_username: vyos
+      vm_password: vyos
+      vm_shell: /usr/bin/sg
+      vm_shell_args: 'vyattacfg -c /config/scripts/reload.sh'
+      vm_shell_env:
+        - "PATH=/bin"
+        - "VAR=test"
+      vm_shell_cwd: "/tmp"
+    delegate_to: localhost
+    register: shell_command_output

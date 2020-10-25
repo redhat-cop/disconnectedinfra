@@ -10,6 +10,25 @@ Uses Ansible to kick off Packer builds with several included reference builds (c
 Action variable will determine whether the systems are created or deployed and tested.  Most often the role will be called twice to build and subsequently test the system.
   action: [ build, test ]
 
+You can include your vsphere information in the role or the inventory
+vsphere:
+  vcenter_server: vcenter.infrabuild.xyz
+  cluster: main
+  datacenter: Datacenter
+  datastore: Datastore1
+  folder: Templates
+  network: BUILDNET
+  username: administrator@vsphere.infrabuild.xyz
+  password: DunderMifflin1234$
+  esxi_hostname: 192.168.5.202
+
+In order to update Red Hat based systems, you will need your Red Hat Subscription Manager login ID and pool id.
+
+rhsm:
+  username:     Red Hat Subscription Manager username
+  password:     Red Hat Subscriptoin Manager password
+  pool_id: Red Hat Subscripton Manager Pool ID 
+
 ## Example Inventory
 all:
   children:

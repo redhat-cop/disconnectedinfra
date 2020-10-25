@@ -1,0 +1,66 @@
+rhel8_iso_url: "{{ artifact_server }}/iso/rhel-8.2-x86_64-dvd.iso"
+rhel8_mac_address: "{{ '00:50:56:A8' | random_mac }}"
+rhel8_ssh_username: root
+rhel8_ssh_password: BadPassword1234$
+rhel8_vm_name: rhel8
+rhel8_files:
+- src: rhel8ks.cfg
+  dest: http/rhel8ks.cfg
+- src: playbook.yml
+  dest: playbook.yml
+
+rhel8_packer_file:
+  variables:
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+    rhsm_password: !unsafe '{{ env `RHSM_PASSWORD` }}'
+  sensitive-variables:
+  - password
+  - rhsm_password
+  builders:
+  - type: vsphere-iso
+    name: rhel8_vsphere_iso
+    CPUs: 2
+    RAM: 4096
+    RAM_reserve_all: true
+    username: "{{ vsphere.username }}"
+    password: !unsafe '{{ user `password` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}" 
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    disk_controller_type: pvscsi
+    firmware: bios
+    boot_wait: 10s
+    boot_order: disk,cdrom
+    http_directory: http
+    boot_command:
+    - !unsafe '<tab> inst.sshd inst.text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort}}/rhel8ks.cfg<enter><wait>'
+    guest_os_type: centos7_64guest
+    insecure_connection: "true"
+    iso_checksum: none
+    iso_urls:
+    - "{{ rhel8_iso_url }}"
+    network_adapters:
+    - network: "{{ vsphere.network }}"
+      mac_address: "{{ rhel8_mac_address }}"
+      network_card: vmxnet3
+    vm_name: "{{ rhel8_vm_name }}"
+    ssh_username: "{{ rhel8_ssh_username }}"
+    ssh_password: "{{ rhel8_ssh_password }}"
+    notes: "SSH Username {{ rhel8_ssh_username }}\nSSH Password {{ rhel8_ssh_password }}"
+    storage:
+    - disk_size: 40906
+      disk_thin_provisioned: true
+    export:
+      force: true
+      output_directory: "{{ artifact_directory }}"
+      name: "{{ rhel8_vm_name }}-{{ ddmmyy }}"
+  provisioners:
+  - type: ansible
+    playbook_file: playbook.yml
+    extra_arguments:
+    - --extra-vars
+    - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"
+    only:
+    - rhel8_vsphere_iso

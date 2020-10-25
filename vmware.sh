@@ -1,0 +1,10 @@
+export VMWARE_USER=administrator@vsphere.infrabuild.xyz
+export VMWARE_PASSWORD=BadPassword1234$
+export VMWARE_HOST=192.168.5.1
+export VMWARE_VALIDATE_CERTS=no
+export VSPHERE_ALLOW_UNVERIFIED_SSL=true
+export GOVC_USERNAME=${VMWARE_USER}
+export GOVC_PASSWORD=${VMWARE_PASSWORD}
+export GOVC_URL=${VMWARE_HOST}
+export GOVC_INSECURE=True
+

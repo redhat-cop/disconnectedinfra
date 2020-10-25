@@ -5,8 +5,10 @@ all:
         localhost:
           ansible_connection: local
       vars:
+        test: esxi
         config_directory: /build_config
         artifact_directory: /build_artifact
+        explode_directory: /build_explode
         vsphere:
           vcenter_server: 192.168.5.1
           cluster: Cluster
@@ -46,7 +48,7 @@ all:
           - src: playbook.yml
             dest: playbook.yml
         - build_name: rhel8
-          should_build: build
+          should_build: none
           packer_file: "{{ rhel8 | combine(override.rhel8,recursive=True) }}"
           files:
           - src: rhel8ks.cfg

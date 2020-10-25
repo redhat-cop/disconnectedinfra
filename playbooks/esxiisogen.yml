@@ -1,0 +1,7 @@
+---
+- hosts: build
+
+  roles:
+  - role: iso_generation
+    vars:
+      dispatch: esxi

@@ -1,3 +1,27 @@
+config_directory: /build_config
+artifact_directory: /build_artifact
+explode_directory: /build_explode
+artifact_server: http://artifact.infrabuild.xyz
+vsphere:
+  vcenter_server: vcenter.infrabuild.xyz
+  cluster: main
+  datacenter: Datacenter
+  datastore: Datastore1
+  folder: Templates
+  network: BUILDNET
+  username: administrator@vsphere.infrabuild.xyz
+  password: DunderMifflin1234$
+  esxi_hostname: 192.168.5.202
+rhsm:
+  username: redhat_username
+  password: BadPassword1234$
+  pool_id: 769a77667d83243s769a77667d83243s
+env:
+  VMWARE_PASSWORD: "{{ vsphere.password }}"
+  RHSM_PASSWORD: "{{ lookup('env', 'RHSM_PASSWORD') }}"
+  PACKER_CACHE_DIR: "{{ artifact_directory }}"
+  PACKER_LOG: 1
+  PACKER_LOG_PATH: "{{ artifact_directory }}/packerlog.txt"
 active_config: "{{ build | selectattr('should_build', 'in', '[config,build]') | list }}" 
 active_build: "{{ active_config | selectattr('should_build', 'eq', 'build') | map(attribute='packer_file.builders') | flatten | map(attribute='name') | list | join(',') }}"
 active_build_dict: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"

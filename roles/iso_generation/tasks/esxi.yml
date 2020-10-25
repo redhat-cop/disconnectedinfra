@@ -1,0 +1,18 @@
+---
+- name: Create ESXi boot.cfg and kickstart
+  template:
+    src: "{{ item.src }}" 
+    dest: "{{ explode_directory }}/esxi/{{ item.dest }}"
+    mode: 0555
+  loop:
+  - src: "{{ esxi_ks_name }}"
+    dest: "{{ esxi_ks_name }}"
+  - src: boot.cfg
+    dest: boot.cfg
+  - src: boot.cfg
+    dest: efi/boot/boot.cfg
+  become: true
+
+- name: Generate isoimage
+  command: "genisoimage -relaxed-filenames -J -R -o {{ artifact_directory }}/{{ iso_name }} -b isolinux.bin -c boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e efiboot.img -no-emul-boot {{ explode_directory }}/esxi"
+  become: true

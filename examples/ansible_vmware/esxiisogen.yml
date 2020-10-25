@@ -1,0 +1,78 @@
+---
+- hosts: build
+
+  vars:
+    explode_dir: /esxi_cdrom
+    iso_name: esxi_module_test.iso
+    vm_name: esxi_module_test
+  
+  tasks:
+  - name: Install genisoimage
+    dnf:
+      name: genisoimage
+      state: latest
+    become: true
+
+  - name: Generate isoimage
+    command: "genisoimage -relaxed-filenames -J -R -o {{ artifact_dir }}/{{ iso_name }} -b isolinux.bin -c boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e efiboot.img -no-emul-boot {{ explode_dir }}"
+    become: true
+
+  - name: Upload ISO
+    community.vmware.vsphere_copy:
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      datastore: "{{ vsphere.datastore }}"
+      src: "{{ iso_name }}"
+      dest: "/{{ iso_name }}"
+      
+
+  - name: Install ESXI
+    community.vmware.vmware_guest:
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      esxi_hostname: "{{ vsphere.esxi_hostname }}"
+      folder: "{{ vsphere.folder }}"
+      validate_certs: no
+      name: "{{ vm_name }}"
+      state: poweredon
+      force: true
+      guest_id: vmkernel65Guest
+      hardware:
+        memory_mb: 4096
+        num_cpus: 2
+        scsi: paravirtual
+        nested_virt: true
+      networks:
+      - name: "{{ vsphere.network }}"
+        mac: "{{ '00:50:56:A8' | random_mac }}"
+        device_type: vmxnet3
+      disk:
+      - size_gb: 40
+        type: thin
+        datastore: "{{ vsphere.datastore }}"
+      cdrom:
+      - state: present
+        type: iso
+        iso_path: "[DATASTORE01] {{ iso_name }}"
+        controller_number: 0
+        unit_number: 0
+
+  - name: Delete VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      esxi_hostname: "{{ vsphere.esxi_hostname }}"
+      folder: "{{ vsphere.folder }}"
+      validate_certs: no
+      name: "{{ vm_name }}"
+      state: absent
+      force: true
+    tags:
+    - delete
+    - never

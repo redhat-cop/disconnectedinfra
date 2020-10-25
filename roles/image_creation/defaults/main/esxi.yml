@@ -1,0 +1,49 @@
+esxi_vars:
+  vm_name: esxi
+  ssh_username: root
+  ssh_password: BadPassword1234$
+esxi_packer_file:
+  variables:
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+  sensitive-variables:
+  - password
+  builders:
+  - type: vsphere-iso
+    name: esxi_vsphere_iso
+    CPUs: 4
+    NestedHV: true
+    RAM: 8192
+    RAM_reserve_all: true
+    username: "{{ vsphere.username }}"
+    password: !unsafe '{{ user `password` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    disk_controller_type: pvscsi
+    firmware: efi
+    boot_wait: 5s
+    boot_order: disk,cdrom,floppy
+    guest_os_type: vmkernel65Guest
+    insecure_connection: "true"
+    iso_checksum: none
+    iso_urls:
+    - "{{ artifact_directory }}/custom_esxi.iso"
+    network_adapters:
+    - network: "{{ vsphere.network }}"
+      mac_address: "{{ '00:50:56:A8' | random_mac }}"
+      network_card: vmxnet3
+    vm_name: "{{ esxi_vars.vm_name }}"
+    ssh_username: "{{ esxi_vars.ssh_username }}"
+    ssh_password: "{{ esxi_vars.ssh_password }}"
+    ssh_timeout: 30m
+    notes: "SSH Username {{ esxi_vars.ssh_username }}\nSSH Password {{ esxi_vars.ssh_password }}"
+    storage:
+    - disk_size: 16384
+      disk_thin_provisioned: true
+    export:
+      name: "{{ esxi_vars.vm_name }}-{{ ddmmyy }}"
+      force: true
+      output_directory: "{{ artifact_directory }}"
+      directory_permission: "0755"

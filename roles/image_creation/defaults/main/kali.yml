@@ -1,0 +1,59 @@
+#Extracting to top level variables because including in a dictionary prevents these "plugin" variables 
+kali_iso_url: "{{ artifact_server }}/iso/kali-linux-2020.3-installer-amd64.iso"
+kali_mac_address: "{{ '00:50:56:A8' | random_mac }}"
+kali_ssh_username: sysadmin
+kali_ssh_password: sysadmin
+kali_vm_name: kali
+kali_files:
+- src: preseed.cfg
+  dest: http/preseed.cfg
+
+#Build the Packer file
+kali_packer_file:
+  variables:
+    password: !unsafe '{{ env `VMWARE_PASSWORD` }}'
+    rhsm_password: !unsafe '{{ env `RHSM_PASSWORD` }}'
+  sensitive-variables:
+  - password
+  - rhsm_password
+  builders:
+  - type: vsphere-iso
+    name: kali_vsphere_iso
+    CPUs: 2
+    RAM: 4096
+    RAM_reserve_all: true
+    username: "{{ vsphere.username }}"
+    password: !unsafe '{{ user `password` }}'
+    vcenter_server: "{{ vsphere.vcenter_server }}"
+    cluster: "{{ vsphere.cluster }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    folder: "{{ vsphere.folder }}"
+    disk_controller_type: pvscsi
+    firmware: bios
+    boot_wait: 10s
+    boot_order: disk,cdrom,floppy
+    http_directory: http
+    boot_command:
+    - <esc><wait>
+    - !unsafe 'install preseed/url={{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg locale=en_US keymap=us hostname=kali domain=local.lan<enter>'
+    guest_os_type: ubuntu64Guest 
+    insecure_connection: "true"
+    iso_checksum: none
+    iso_urls:
+    - "{{ kali_iso_url }}"
+    network_adapters:
+      - network: "{{ vsphere.network }}"
+        mac_address: "{{ kali_mac_address }}"
+        network_card: vmxnet3
+    vm_name: "{{ kali_vm_name }}"
+    ssh_username: "{{ kali_ssh_username }}"
+    ssh_password: "{{ kali_ssh_password }}"
+    notes: "SSH Username {{ kali_ssh_username }}\nSSH Password {{ kali_ssh_password }}"
+    storage:
+      - disk_size: 40906
+        disk_thin_provisioned: true
+    export:
+      force: true
+      output_directory: "{{ artifact_directory }}"
+      name: "{{ kali_vm_name }}-{{ ddmmyy }}"
