@@ -12,3 +12,4 @@ packer_all:
   sensitive-variables: "{{ packer_sensitive_variables }}"
   builders: "{{ packer_builders }}"
   provisioners: "{{ packer_provisioners }}"
+ddmmyy: "{{ lookup('pipe','date +%d%m%y') }}"
