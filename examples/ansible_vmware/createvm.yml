@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+  - name: Deploy OVF Templates
+    community.vmware.vmware_deploy_ovf:
+      folder: "/{{ vsphere.datacenter }}/vm/{{ vsphere.folder }}"
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      datastore: "{{ vsphere.datastore }}"
+      cluster: "{{ vsphere.cluster }}"
+      name: rhel7
+      networks: "{u'VM Network':u'{{ vsphere.network }}'}"
+      validate_certs: no
+      power_on: no
+      ovf: "/build_artifact/rhel7-latest.ova"
+
+  - name: Create a virtual machine on given ESXi hostname
+    community.vmware.vmware_guest:
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      esxi_hostname: "{{ vsphere.esxi_hostname }}"
+      folder: "{{ vsphere.folder }}"
+      validate_certs: no
+      name: satellite 
+      template: rhel7
+      state: poweredon
+      force: true
+      hardware:
+        memory_mb: 4096
+        num_cpus: 2
+        scsi: paravirtual
+      networks:
+      - name: "{{ vsphere.network }}"
+        ip: 192.168.5.10
+        netmask: 255.255.255.0
+        gateway: 192.168.5.254
+        dns_servers: 1.1.1.1
+        mac: "{{ '00:50:56:A8' | random_mac }}"
+        device_type: vmxnet3

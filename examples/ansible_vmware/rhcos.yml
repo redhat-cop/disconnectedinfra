@@ -1,0 +1,105 @@
+#This was an attempt to make a small portion of OCP deployment work
+---
+- hosts: build
+  connection: local
+
+  vars:
+    bootstrap_base64: ewogICJpZ25pdGlvbiI6IHsKICAgICJjb25maWciOiB7CiAgICAgICJhcHBlbmQiOiBbCiAgICAgICAgewogICAgICAgICAgInNvdXJjZSI6ICJodHRwOi8vaGVscGVyLm9jcDQuZGlzY29ubmVjdC5ibHVlOjgwODAvaWduaXRpb24vYm9vdHN0cmFwLmlnbiIsCiAgICAgICAgICAidmVyaWZpY2F0aW9uIjoge30KICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICAic2VjdXJpdHkiOiB7fSwKICAgICJ0aW1lb3V0cyI6IHt9LAogICAgInZlcnNpb24iOiAiMi40LjAiCiAgfSwKICAibmV0d29ya2QiOiB7fSwKICAicGFzc3dkIjoge30sCiAgInN0b3JhZ2UiOiB7fSwKICAic3lzdGVtZCI6IHt9Cn0K
+    master_base64: eyJpZ25pdGlvbiI6eyJjb25maWciOnsiYXBwZW5kIjpbeyJzb3VyY2UiOiJodHRwczovLzEwLjkwLjIuMToyMjYyMy9jb25maWcvbWFzdGVyIiwidmVyaWZpY2F0aW9uIjp7fX1dfSwic2VjdXJpdHkiOnsidGxzIjp7ImNlcnRpZmljYXRlQXV0aG9yaXRpZXMiOlt7InNvdXJjZSI6ImRhdGE6dGV4dC9wbGFpbjtjaGFyc2V0PXV0Zi04O2Jhc2U2NCxMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHRDazFKU1VSRlJFTkRRV1pwWjBGM1NVSkJaMGxKVG5SeVFWaDBablE0UTNOM1JGRlpTa3R2V2tsb2RtTk9RVkZGVEVKUlFYZEtha1ZUVFVKQlIwRXhWVVVLUTNoTlNtSXpRbXhpYms1dllWZGFNRTFTUVhkRVoxbEVWbEZSUkVWM1pIbGlNamt3VEZkT2FFMUNORmhFVkVsM1RWUkJlRTVFUlhsT1JHTjVUVVp2V0FwRVZFMTNUVlJCZUUxcVJYbE9SR041VFVadmQwcHFSVk5OUWtGSFFURlZSVU40VFVwaU0wSnNZbTVPYjJGWFdqQk5Va0YzUkdkWlJGWlJVVVJGZDJSNUNtSXlPVEJNVjA1b1RVbEpRa2xxUVU1Q1oydHhhR3RwUnpsM01FSkJVVVZHUVVGUFEwRlJPRUZOU1VsQ1EyZExRMEZSUlVGMEszbEhSbFJyTDFkUGVrVUtZMXBZUmk5R1J6TlJURlZPTjJwTGJqQXpMemRMTTBkbGJrRklSMmRMWjJSTVdFTnVTRGhZZWxsc1ZHbE9TSGszUkRNNE9FTk5iazVVUW5SQlRtUjNWQXBIVENzMGNqWXZlSFZVWVRnd2N5OU5Za0pGVlRSaVdVOVRjMnBYUm5CT1V6SnVjUzlYZFcxMFNWVXhkME13UmtKblZIWlZaakJwVkRGR1owd3hia3R5Q20xNGFESldWbG8zYXpkVVQxUTNNekVyU0RNMU1DdFFUSGxyTldwTWVtb3hWSE5EUW5GNVNtVnBjVEp2VHpSTlEwcE9ORmhFU0U1dWNHZHpPRkJWWjBVS2JXTjFSRkIxVFhKM1FpOXBUamhFVDBoNFZpOXpVM2d5Umt0MVpqSmFTVFZGU0dWa1ZqTnZaazFTU0U1S1lrUk1SVXd4TUdWa1lXTkdMM2htVkVsbVNRcDFablZ0VWtwYVoyVnNZVmQxYkhKUGNFUTVSRWRDVW5VdlNrNUxkRGMwZDFOMGJsaFNla2RTUTBSbVIxWktMell6YjNadmNWWXlNVko2Y0VvNFJXMWtDbFpGYldWUVZHOW9TbmRKUkVGUlFVSnZNRWwzVVVSQlQwSm5UbFpJVVRoQ1FXWTRSVUpCVFVOQmNWRjNSSGRaUkZaU01GUkJVVWd2UWtGVmQwRjNSVUlLTDNwQlpFSm5UbFpJVVRSRlJtZFJWU3R6ZHpkMGMwRm1kRXRGTjBac2JrOUlSMFZoU1V0VVNYVnpTWGRFVVZsS1MyOWFTV2gyWTA1QlVVVk1RbEZCUkFwblowVkNRVWR2Wm5oQk9VWlNhWGQzVldab1dVVlBZazFQYmtvM1dGUkdXRGRCY0M5WVQwOXlhR3B0VFZjNUsxSnhVWFpsVnl0ck0za3ZLMmRxT1hOckNrTTJVWGM1SzJwV1RubHFTWE5uTmxCSlltdHlWakp4Um5KYWMyaEZXR1J1VFcweE9XaEtiamMzT1hGVmVXaGhUa3NyVFdwSFVVMXROalEwV0d0ek1ISUthWE40UWpKc1IwVXJOMk5GVWtaU1pWVkpkREJEYVZaaGVYcHNRVE5UUTNkQ1UwVXpZa0Y0U0RSWVlVRnhhVUp6TWtzMWEwbGhZVzFXUTB0cVZYbGFVZ3BKZFdnM2NHTTBiM05tVjBSR2JYSjFXbWt6TDJZNFFYZENNR1FyTUhNMFoxTlVUMFpXUlVGaGRXWlFUU3QzV2xkTFNHMTRXa1V5UmtKeFIzWkZWRlU0Q21Oa04ybEZXbmhwTmtSQmRYSmFiMGROVG5Ock5DdDBVbGRzVGtORFFVZEJXblJWU25aVU9IWlBUMGxoT0RObFZtSmxRM1IxUmxSeVpYaEhMM1ZYVEZZS2QxVjFabnBwUVc5QlMydENSSG81Yms5VFoyVTVkMDlvTVVaM1BRb3RMUzB0TFVWT1JDQkRSVkpVU1VaSlEwRlVSUzB0TFMwdENnPT0iLCJ2ZXJpZmljYXRpb24iOnt9fV19fSwidGltZW91dHMiOnt9LCJ2ZXJzaW9uIjoiMi4yLjAifSwibmV0d29ya2QiOnt9LCJwYXNzd2QiOnt9LCJzdG9yYWdlIjp7fSwic3lzdGVtZCI6e319
+    worker_base64: eyJpZ25pdGlvbiI6eyJjb25maWciOnsiYXBwZW5kIjpbeyJzb3VyY2UiOiJodHRwczovLzEwLjkwLjIuMToyMjYyMy9jb25maWcvbWFzdGVyIiwidmVyaWZpY2F0aW9uIjp7fX1dfSwic2VjdXJpdHkiOnsidGxzIjp7ImNlcnRpZmljYXRlQXV0aG9yaXRpZXMiOlt7InNvdXJjZSI6ImRhdGE6dGV4dC9wbGFpbjtjaGFyc2V0PXV0Zi04O2Jhc2U2NCxMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHRDazFKU1VSRlJFTkRRV1pwWjBGM1NVSkJaMGxKVG5SeVFWaDBablE0UTNOM1JGRlpTa3R2V2tsb2RtTk9RVkZGVEVKUlFYZEtha1ZUVFVKQlIwRXhWVVVLUTNoTlNtSXpRbXhpYms1dllWZGFNRTFTUVhkRVoxbEVWbEZSUkVWM1pIbGlNamt3VEZkT2FFMUNORmhFVkVsM1RWUkJlRTVFUlhsT1JHTjVUVVp2V0FwRVZFMTNUVlJCZUUxcVJYbE9SR041VFVadmQwcHFSVk5OUWtGSFFURlZSVU40VFVwaU0wSnNZbTVPYjJGWFdqQk5Va0YzUkdkWlJGWlJVVVJGZDJSNUNtSXlPVEJNVjA1b1RVbEpRa2xxUVU1Q1oydHhhR3RwUnpsM01FSkJVVVZHUVVGUFEwRlJPRUZOU1VsQ1EyZExRMEZSUlVGMEszbEhSbFJyTDFkUGVrVUtZMXBZUmk5R1J6TlJURlZPTjJwTGJqQXpMemRMTTBkbGJrRklSMmRMWjJSTVdFTnVTRGhZZWxsc1ZHbE9TSGszUkRNNE9FTk5iazVVUW5SQlRtUjNWQXBIVENzMGNqWXZlSFZVWVRnd2N5OU5Za0pGVlRSaVdVOVRjMnBYUm5CT1V6SnVjUzlYZFcxMFNWVXhkME13UmtKblZIWlZaakJwVkRGR1owd3hia3R5Q20xNGFESldWbG8zYXpkVVQxUTNNekVyU0RNMU1DdFFUSGxyTldwTWVtb3hWSE5EUW5GNVNtVnBjVEp2VHpSTlEwcE9ORmhFU0U1dWNHZHpPRkJWWjBVS2JXTjFSRkIxVFhKM1FpOXBUamhFVDBoNFZpOXpVM2d5Umt0MVpqSmFTVFZGU0dWa1ZqTnZaazFTU0U1S1lrUk1SVXd4TUdWa1lXTkdMM2htVkVsbVNRcDFablZ0VWtwYVoyVnNZVmQxYkhKUGNFUTVSRWRDVW5VdlNrNUxkRGMwZDFOMGJsaFNla2RTUTBSbVIxWktMell6YjNadmNWWXlNVko2Y0VvNFJXMWtDbFpGYldWUVZHOW9TbmRKUkVGUlFVSnZNRWwzVVVSQlQwSm5UbFpJVVRoQ1FXWTRSVUpCVFVOQmNWRjNSSGRaUkZaU01GUkJVVWd2UWtGVmQwRjNSVUlLTDNwQlpFSm5UbFpJVVRSRlJtZFJWU3R6ZHpkMGMwRm1kRXRGTjBac2JrOUlSMFZoU1V0VVNYVnpTWGRFVVZsS1MyOWFTV2gyWTA1QlVVVk1RbEZCUkFwblowVkNRVWR2Wm5oQk9VWlNhWGQzVldab1dVVlBZazFQYmtvM1dGUkdXRGRCY0M5WVQwOXlhR3B0VFZjNUsxSnhVWFpsVnl0ck0za3ZLMmRxT1hOckNrTTJVWGM1SzJwV1RubHFTWE5uTmxCSlltdHlWakp4Um5KYWMyaEZXR1J1VFcweE9XaEtiamMzT1hGVmVXaGhUa3NyVFdwSFVVMXROalEwV0d0ek1ISUthWE40UWpKc1IwVXJOMk5GVWtaU1pWVkpkREJEYVZaaGVYcHNRVE5UUTNkQ1UwVXpZa0Y0U0RSWVlVRnhhVUp6TWtzMWEwbGhZVzFXUTB0cVZYbGFVZ3BKZFdnM2NHTTBiM05tVjBSR2JYSjFXbWt6TDJZNFFYZENNR1FyTUhNMFoxTlVUMFpXUlVGaGRXWlFUU3QzV2xkTFNHMTRXa1V5UmtKeFIzWkZWRlU0Q21Oa04ybEZXbmhwTmtSQmRYSmFiMGROVG5Ock5DdDBVbGRzVGtORFFVZEJXblJWU25aVU9IWlBUMGxoT0RObFZtSmxRM1IxUmxSeVpYaEhMM1ZYVEZZS2QxVjFabnBwUVc5QlMydENSSG81Yms5VFoyVTVkMDlvTVVaM1BRb3RMUzB0TFVWT1JDQkRSVkpVU1VaSlEwRlVSUzB0TFMwdENnPT0iLCJ2ZXJpZmljYXRpb24iOnt9fV19fSwidGltZW91dHMiOnt9LCJ2ZXJzaW9uIjoiMi4yLjAifSwibmV0d29ya2QiOnt9LCJwYXNzd2QiOnt9LCJzdG9yYWdlIjp7fSwic3lzdGVtZCI6e319
+    folder: DISCONNECTED/DISCONNECT.BLUE
+    network: SERVER_NET
+    machines:
+    - name: bootstrap
+      mac: 00:50:56:02:02:05
+      base64: "{{ bootstrap_base64 }}"
+    - name: master01
+      mac: 00:50:56:02:02:0A
+      base64: "{{ master_base64 }}"
+    - name: master02
+      mac: 00:50:56:02:02:0B
+      base64: "{{ master_base64 }}"
+    - name: master03
+      mac: 00:50:56:02:02:0C
+      base64: "{{ master_base64 }}"
+    - name: worker01
+      mac: 00:50:56:02:02:0D
+      base64: "{{ worker_base64 }}"
+    - name: worker02
+      mac: 00:50:56:02:02:0E
+      base64: "{{ worker_base64 }}"
+    - name: worker03
+      mac: 00:50:56:02:02:0F
+      base64: "{{ worker_base64 }}"
+
+  tasks:
+  - name: vm
+    vmware_guest:
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      esxi_hostname: "{{ vsphere.esxi_hostname }}"
+      folder: "{{ folder }}"
+      validate_certs: no
+      name: rhcos-vmware
+      state: "{{ vm_state }}"
+      force: true
+    when: vm_state == 'absent'
+
+  - name: Deploy the OVF template into the folder
+    community.vmware.vmware_deploy_ovf:
+      hostname: "{{ vsphere.vcenter_server }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      datastore: "{{ vsphere.datastore }}"
+      folder: "/Datacenter/vm/{{ folder }}"
+      name: OCP45
+      allow_duplicates: False
+      disk_provisioning: thin
+      networks: "{u'VM Network':u'{{ network }}'}"
+      ova: "{{ playbook_dir }}/rhcos-vmware.x86_64.ova"
+      power_on: False
+      validate_certs: False
+    when: vm_state == 'poweredon'
+
+  - name: Remove the Network Adapter
+    command: "govc device.remove -vm /Datacenter/vm/{{ folder }}/OCP45 ethernet-0"
+    when: vm_state == 'poweredon'
+
+  - name: Update VM options on the template
+    command: "govc vm.change -vm /Datacenter/vm/{{ folder }}/OCP45 -latency high -e=disk.EnableUUID=TRUE -e=guestinfo.ignition.config.data.encoding=base64 -e=guestinfo.ignition.config.data=blah" # noqa 204
+    when: vm_state == 'poweredon'
+
+  - name: vm
+    vmware_guest:
+      hostname: "{{ vsphere.vcenter_server }}"
+      datacenter: "{{ vsphere.datacenter }}"
+      username: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      esxi_hostname: "{{ vsphere.esxi_hostname }}"
+      folder: "{{ folder }}"
+      validate_certs: no
+      name: "{{ item.name }}"
+      template: "/Datacenter/vm/{{ folder }}/OCP45"
+      state: "{{ vm_state }}"
+      force: true
+      customvalues:
+      - key: guestinfo.ignition.config.data
+        value: "{{ item.base64 }}"
+      hardware:
+        memory_mb: 16384
+        memory_reservation_lock: True
+        num_cpus: 4
+      disk:
+      - size_gb: 120
+        type: thin
+        datastore: "{{ vsphere.datastore }}"
+      networks:
+      - name: "{{ network }}"
+        mac: "{{ item.mac }}"
+      wait_for_ip_address: no
+    loop: "{{ machines }}"
+
+
