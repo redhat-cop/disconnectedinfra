@@ -1,14 +1,14 @@
 #Extracting to top level variables because including in a dictionary prevents these "plugin" variables 
 rhel7_iso_url: "{{ artifact_server }}/iso/rhel-server-7.8-x86_64-dvd.iso"
 rhel7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
-rhel7_ssh_username: root
+rhel7_ssh_username: sysadmin
 rhel7_ssh_password: BadPassword1234$
 rhel7_vm_name: rhel7
 rhel7_files:
-- src: ks.cfg
-  dest: ks.cfg
-- src: playbook.yml
-  dest: playbook.yml
+- src: rhel7/ks.cfg
+  dest: rhel7/ks.cfg
+- src: rhel7/playbook.yml
+  dest: rhel7/playbook.yml
 
 #Build the Packer file
 rhel7_packer_file:
@@ -21,6 +21,7 @@ rhel7_packer_file:
   builders:
   - type: vsphere-iso
     name: rhel7_vsphere_iso
+    convert_to_template: true
     CPUs: 2
     RAM: 4096
     RAM_reserve_all: true
@@ -34,7 +35,7 @@ rhel7_packer_file:
     disk_controller_type: pvscsi
     firmware: bios
     floppy_files:
-    - ks.cfg
+    - rhel7/ks.cfg
     boot_wait: 10s
     boot_order: disk,cdrom,floppy
     boot_command:
@@ -56,13 +57,9 @@ rhel7_packer_file:
     storage:
       - disk_size: 40906
         disk_thin_provisioned: true
-    export:
-      force: true
-      output_directory: "{{ artifact_directory }}"
-      name: "{{ rhel7_vm_name }}-{{ ddmmyy }}"
   provisioners:
   - type: ansible
-    playbook_file: playbook.yml
+    playbook_file: rhel7/playbook.yml
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"

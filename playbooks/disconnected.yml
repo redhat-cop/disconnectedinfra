@@ -1,0 +1,5 @@
+---
+- hosts: build
+
+  roles:
+  - role: env_bootstrap

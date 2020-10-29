@@ -16,9 +16,10 @@
     validate_certs: no
     power_on: no
     ovf: "/build_artifact/{{ item.build_name }}-290920.ovf"
-  loop: "{{ active_build_dict }}"
+  loop: "{{ active_config }}"
   loop_control:
     label: "{{ item.build_name }}"
+  when: run_build
 
 - name: Create a virtual machine on given ESXi hostname
   community.vmware.vmware_guest:
@@ -42,11 +43,13 @@
       mac: "{{ '00:50:56:A8' | random_mac }}"
       device_type: vmxnet3
   delegate_to: localhost
-  loop: "{{ active_build_dict }}"
+  loop: "{{ active_config }}"
   loop_control:
     label: "{{ item.build_name }}"
+  when: run_build
 
 - pause:
+  when: run_build
 
 - name: Delete a virtual machine on given ESXi hostname
   community.vmware.vmware_guest:
@@ -70,6 +73,7 @@
       mac: "{{ '00:50:56:A8' | random_mac }}"
       device_type: vmxnet3
   delegate_to: localhost
-  loop: "{{ active_build_dict }}"
+  loop: "{{ active_config }}"
   loop_control:
     label: "{{ item.build_name }}"
+  when: run_build

@@ -22,18 +22,29 @@ env:
   PACKER_CACHE_DIR: "{{ artifact_directory }}"
   PACKER_LOG: 1
   PACKER_LOG_PATH: "{{ artifact_directory }}/packerlog.txt"
-active_config: "{{ build | selectattr('should_build', 'in', '[config,build]') | list }}" 
-active_build: "{{ active_config | selectattr('should_build', 'eq', 'build') | map(attribute='packer_file.builders') | flatten | map(attribute='name') | list | join(',') }}"
-active_build_dict: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"
+#False will only generate config file but not run build
+run_build: false
+#Default build filter (use everything)
+build_filter:
+- vyos
+- pfsense
+- kali
+- esxi
+- centos7
+- centos8
+- rhel7
+- rhel8
+batch_size: 2
+#Filter out any build not specified in the build_filter so you only build what you want
+active_config: "{{ build_list | selectattr('build_name', 'in', build_filter) | list }}" 
+#Make a comman seperated list of the build names within the active build
+active_build: "{{ active_config | map(attribute='packer_file.builders') | flatten | map(attribute='name') | list | join(',') }}"
+#This is probably unnecessary now since we don't individually sort build vs config
+#active_build_dict: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"
 config_files: "{{ active_config | selectattr('files', 'defined') | map(attribute='files') | list | flatten | unique }}"
-poll_value: 5
-packer_variables: "{{ active_config | selectattr('packer_file.variables', 'defined') | map(attribute='packer_file.variables') | list | combine }}"
-packer_sensitive_variables: "{{ active_config | selectattr('packer_file.sensitive-variables', 'defined') | map(attribute='packer_file.sensitive-variables') | list | flatten | unique }}"
-packer_builders: "{{ active_config | selectattr('packer_file.builders', 'defined') | map(attribute='packer_file.builders') | list | flatten }}"
-packer_provisioners: "{{ active_config | selectattr('packer_file.provisioners', 'defined') | map(attribute='packer_file.provisioners') | list | flatten }}"
 packer_all:
-  variables: "{{ packer_variables }}"
-  sensitive-variables: "{{ packer_sensitive_variables }}"
-  builders: "{{ packer_builders }}"
-  provisioners: "{{ packer_provisioners }}"
+  variables: "{{ active_config | selectattr('packer_file.variables', 'defined') | map(attribute='packer_file.variables') | list | combine }}"
+  sensitive-variables: "{{ active_config | selectattr('packer_file.sensitive-variables', 'defined') | map(attribute='packer_file.sensitive-variables') | list | flatten | unique }}"
+  builders: "{{ active_config | selectattr('packer_file.builders', 'defined') | map(attribute='packer_file.builders') | list | flatten }}"
+  provisioners: "{{ active_config | selectattr('packer_file.provisioners', 'defined') | map(attribute='packer_file.provisioners') | list | flatten }}"
 ddmmyy: "{{ lookup('pipe','date +%d%m%y') }}"

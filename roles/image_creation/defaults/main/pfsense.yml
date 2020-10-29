@@ -4,8 +4,8 @@ pfsense_ssh_username: root
 pfsense_ssh_password: pfsense
 pfsense_vm_name: pfsense
 pfsense_files:
-- src: config.xml 
-  dest: http/config.xml
+- src: pfsense/config.xml 
+  dest: pfsense/config.xml
 
 pfsense_packer_file:
   variables:
@@ -15,6 +15,7 @@ pfsense_packer_file:
   builders:
   - type: vsphere-iso
     name: pfsense_vsphere_iso
+    convert_to_template: true
     CPUs: 2
     RAM: 4096
     RAM_reserve_all: true
@@ -27,49 +28,49 @@ pfsense_packer_file:
     folder: "{{ vsphere.folder }}"
     http_directory: http
     cd_files:
-    - http/config.xml
+    - pfsense/config.xml
     firmware: bios
-    boot_wait: 5s
+    boot_wait: 3m
     boot_order: disk,cdrom,floppy
     boot_command:
     #copyright
-    - <wait2m><enter>
+    - <enter><wait10>
     #Installpfsense
-    - <wait5><enter>
+    - <enter><wait10>
     #keymap
-    - <wait5><enter>
+    - <enter><wait10>
     #manual disk
-    - <wait5><down>
+    - <down><wait10>
     #Select manual
-    - <wait5><enter>
+    - <enter><wait10>
     #select disk
-    - <wait5><left>
+    - <left><wait10>
     #Partition
-    - <wait5><enter>
+    - <enter><wait10>
     #Use Entire Disk
-    - <wait5><enter>
+    - <enter><wait10>
     #Use MBR
-    - <wait5><enter>
+    - <enter><wait10>
     #Finish
-    - <wait5><enter>
+    - <enter><wait10>
     #Commit
-    - <wait5><enter><wait45>
+    - <enter><wait60>
     #Just reboot without a shell
-    - <enter><wait5>
+    - <enter><wait10>
     #Acknowledge and wait for reboot
-    - <enter><wait2m>
+    - <enter><wait3m>
     #Don't set VLAN
-    - n<enter><wait5>
+    - n<enter><wait10>
     #Designate WAN interface as vmx0
-    - vmx0<enter><wait5>
+    - vmx0<enter><wait10>
     #No LAN
-    - <enter><wait5>
+    - <enter><wait10>
     #Proceed with changes
-    - y<enter><wait45>
-    - 8<enter><wait5>
-    - pkg install -y pfSense-pkg-Open-VM-Tools<enter><wait30>
-    - mount_cd9660 /dev/cd1 /mnt<enter><wait5>
-    - cp /mnt/config.xml /conf/config.xml<enter><wait5>
+    - y<enter><wait60>
+    - 8<enter><wait10>
+    - pkg install -y pfSense-pkg-Open-VM-Tools<enter><wait45>
+    - mount_cd9660 /dev/cd1 /mnt<enter><wait10>
+    - cp /mnt/config.xml /conf/config.xml<enter><wait10>
     - reboot<enter>
     guest_os_type: ubuntu64Guest
     insecure_connection: "true"
@@ -87,8 +88,3 @@ pfsense_packer_file:
     storage:
     - disk_size: 16384
       disk_thin_provisioned: true
-    export:
-      name: "{{ pfsense_vm_name }}-{{ ddmmyy }}"
-      force: true
-      output_directory: "{{ artifact_directory }}"
-      directory_permission: "0755"

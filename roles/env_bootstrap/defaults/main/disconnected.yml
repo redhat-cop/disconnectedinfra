@@ -1,0 +1,131 @@
+disconnected:
+  variable:
+    rhn_username:
+    rhn_password:
+    rhn_pool_id:
+  data:
+    vsphere_datacenter:
+      dc:
+        name: Datacenter
+    vsphere_datastore:
+      datastore:
+        name: DATASTORE01
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+    vsphere_resource_pool:
+      pool:
+        name: 206/Resources
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+    vsphere_host:
+      host:
+        name: 10.15.15.206
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+    vsphere_virtual_machine:
+      template:
+        name: rhel8
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+      vyos:
+        name: vyos
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+    vsphere_distributed_virtual_switch:
+      switch:
+        name: DISCONNECT.BLUE
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+    vsphere_network:
+      network:
+        name: 1701 - OFFNET
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+      server:
+        name: SERVER_NET
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+      shared:
+        name: SHARED_SERVICES
+        datacenter_id: ${data.vsphere_datacenter.dc.id}
+  locals:
+    testinstances:
+      testone:
+        name: RHELTESTONE
+      testtwo:
+        name: RHELTESTTWO
+  resource:
+    vsphere_virtual_machine:
+      linux_cloudinit:
+        for_each: ${local.testinstances}
+        name: ${each.value.name}
+        resource_pool_id: ${data.vsphere_resource_pool.pool.id}
+        datastore_id: ${data.vsphere_datastore.datastore.id}
+        host_system_id: ${data.vsphere_host.host.id}
+        num_cpus: 2
+        memory: 4096
+        guest_id: ${data.vsphere_virtual_machine.template.guest_id}
+        scsi_type: ${data.vsphere_virtual_machine.template.scsi_type}
+        folder: DISCONNECTED/DISCONNECT.BLUE
+        network_interface:
+          network_id: ${data.vsphere_network.network.id}
+          adapter_type: vmxnet3
+        wait_for_guest_net_routable: false
+        disk: 
+          label: disk0
+          size: ${data.vsphere_virtual_machine.template.disks.0.size}
+          eagerly_scrub: ${data.vsphere_virtual_machine.template.disks.0.eagerly_scrub}
+          thin_provisioned: ${data.vsphere_virtual_machine.template.disks.0.thin_provisioned}
+        clone:
+          template_uuid: ${data.vsphere_virtual_machine.template.id}
+        connection:
+          type: ssh
+          user: sysadmin
+          password: BadPassword1234$
+          host: ${self.default_ip_address}
+        provisioner:
+          remote-exec:
+            inline:
+            - curl --insecure --output katello-ca-consumer-latest.noarch.rpm https://satellite.infrabuild.xyz/pub/katello-ca-consumer-latest.noarch.rpm
+            - sudo yum localinstall -y katello-ca-consumer-latest.noarch.rpm
+            - sudo subscription-manager register --org='Infrabuild' --activationkey='Default'
+          remote-exec:
+            when: destroy
+            on_failure: continue
+            inline:
+            - sudo subscription-manager unregister
+      vyos:
+        name: OFFNET_VYOS_2
+        resource_pool_id: ${data.vsphere_resource_pool.pool.id}
+        datastore_id: ${data.vsphere_datastore.datastore.id}
+        host_system_id: ${data.vsphere_host.host.id}
+        num_cpus: 2
+        memory: 4096
+        guest_id: ${data.vsphere_virtual_machine.vyos.guest_id}
+        scsi_type: ${data.vsphere_virtual_machine.vyos.scsi_type}
+        folder: DISCONNECTED/DISCONNECT.BLUE
+        network_interface:
+        - network_id: ${data.vsphere_network.network.id}
+          adapter_type: vmxnet3
+        - network_id: ${data.vsphere_network.server.id}
+          adapter_type: vmxnet3
+        - network_id: ${data.vsphere_network.shared.id}
+          adapter_type: vmxnet3
+        wait_for_guest_net_routable: false
+        disk: 
+          label: disk0
+          size: ${data.vsphere_virtual_machine.vyos.disks.0.size}
+          eagerly_scrub: ${data.vsphere_virtual_machine.vyos.disks.0.eagerly_scrub}
+          thin_provisioned: ${data.vsphere_virtual_machine.vyos.disks.0.thin_provisioned}
+        clone:
+          template_uuid: ${data.vsphere_virtual_machine.vyos.id}
+        connection:
+          type: ssh
+          user: vyos
+          password: vyos
+          host: ${self.default_ip_address}
+        provisioner:
+        - file:
+            content: "{{ lookup('template', './config.boot.j2') }}"
+            destination: /config/config.boot 
+        - file:
+            content: "{{ lookup('template', './reload.sh.j2') }}"
+            destination: /config/scripts/reload.sh 
+        - remote-exec: 
+            on_failure: continue
+            inline:
+            - chmod 755 /config/scripts/reload.sh
+            - /usr/bin/sg vyattacfg -c /config/scripts/reload.sh
+            - exit 0
