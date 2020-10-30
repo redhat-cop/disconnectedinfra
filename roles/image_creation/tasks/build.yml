@@ -41,7 +41,7 @@
   loop: "{{ config_files }}"
   
 - name: Run packer
-  shell: "packer build -force -only={{ active_build }} packerall.json"
+  shell: "packer build -force -only={{ active_build }} -parallel-builds={{ parallel_builds }} packerall.json"
   args:
     chdir: "{{ config_directory }}"
   environment: "{{ env }}"
@@ -50,6 +50,7 @@
 - name: Export builds in batches
   include_tasks: export.yml
   loop: "{{ build_filter | batch(batch_size) | list }}"
+  when: export_build
 
 - name: Convert OVF to OVA
   shell: "ovftool --overwrite {{ artifact_directory }}/{{ item.build_name}}-{{ ddmmyy }}/{{ item.build_name }}-{{ ddmmyy }}.ovf {{artifact_directory }}/{{ item.build_name }}-{{ ddmmyy }}.ova"
@@ -59,7 +60,7 @@
   loop: "{{ active_config }}"
   loop_control:
     label: "{{ item.build_name }}"
-  when: run_build
+  when: export_build
 
 - name: Symlink build to the latest tag
   file:
@@ -67,4 +68,4 @@
     dest: "{{ artifact_directory }}/{{ item.build_name }}-latest.ova"
     state: link
   loop: "{{ active_config }}"
-  when: run_build
+  when: export_build
