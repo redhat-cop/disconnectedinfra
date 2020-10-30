@@ -8,7 +8,7 @@ This repository is structured as an Ansible collection.
 
 ## Important Roles
 
-[Image Creation](roles/image_creation/README.md) - this role is meant to solve the problem of consistently creating virtual machines across disparate infrastructure such as QEMU-KVM and VMWare.
+[Image Creation](roles/image_creation/README.md) - this role is meant to solve the problem of consistently creating virtual machines across disparate infrastructure such as QEMU-KVM and VMWare.  
 [Environment Bootstrapping](roles/env_bootstrap/README.md) - this role is meant to solve the problem of consistently creating virtual machines across disparate infrastructure such as QEMU-KVM and VMWare.
 
 ## What gets set up
