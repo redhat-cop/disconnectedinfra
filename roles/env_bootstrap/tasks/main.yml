@@ -1,0 +1,37 @@
+---
+- name: Create build and artifact directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '01777'
+  loop:
+  - "{{ config_directory }}"
+  - "{{ artifact_directory }}"
+  - "{{ explode_directory }}"
+  become: true
+
+- name: Ensure build temp filesystem is mounted
+  mount:
+    name: "{{ config_directory }}"
+    src: tmpfs
+    fstype: tmpfs
+    opts: size=512m
+    state: mounted
+  become: true
+
+- name: Create directory for Terraform environments
+  file:
+    path: "{{ config_directory }}/{{ item }}"
+    state: directory
+    mode: '01777'
+  become: true
+  loop:
+  - disconnected
+
+- name: Copy packer file
+  copy: 
+    content: "{{ item.content | to_nice_json }}"
+    dest: "{{ config_directory }}/{{ item.name }}/{{ item.name }}.tf.json"
+    mode: 0644
+  loop:
+    - { name: disconnected, content: "{{ disconnected }}" }

@@ -1,0 +1,31 @@
+build_list:
+- build_name: vyos
+  should_build: build
+  packer_file: "{{ vyos_packer_file }}"
+- build_name: esxi
+  should_build: build
+  packer_file: "{{ esxi_packer_file }}"
+- build_name: pfsense
+  should_build: build
+  packer_file: "{{ pfsense_packer_file }}"
+  files: "{{ pfsense_files }}"
+- build_name: kali
+  should_build: build
+  packer_file: "{{ kali_packer_file }}"
+  files: "{{ kali_files }}"
+- build_name: rhel7
+  should_build: build
+  packer_file: "{{ rhel7_packer_file }}"
+  files: "{{ rhel7_files }}"
+- build_name: rhel8
+  should_build: build
+  packer_file: "{{ rhel8_packer_file }}"
+  files: "{{ rhel8_files }}"
+- build_name: centos7
+  should_build: build
+  packer_file: "{{ centos7_packer_file }}"
+  files: "{{ centos7_files }}"
+- build_name: centos8
+  should_build: build
+  packer_file: "{{ centos8_packer_file }}"
+  files: "{{ centos8_files }}"

@@ -1,13 +1,13 @@
 centos8_iso_url: "{{ artifact_server }}/iso/CentOS-8.2.2004-x86_64-dvd1.iso"
 centos8_mac_address: "{{ '00:50:56:A8' | random_mac }}"
-centos8_ssh_username: root
+centos8_ssh_username: sysadmin
 centos8_ssh_password: BadPassword1234$
 centos8_vm_name: centos8
 centos8_files:
-- src: rhel8ks.cfg
-  dest: http/centos8ks.cfg
-- src: playbook.yml
-  dest: playbook.yml
+- src: centos8/ks.cfg
+  dest: centos8/ks.cfg
+- src: centos8/playbook.yml
+  dest: centos8/playbook.yml
 
 centos8_packer_file:
   variables:
@@ -19,6 +19,7 @@ centos8_packer_file:
   builders:
   - type: vsphere-iso
     name: centos8_vsphere_iso
+    convert_to_template: true
     CPUs: 2
     RAM: 4096
     RAM_reserve_all: true
@@ -33,9 +34,9 @@ centos8_packer_file:
     firmware: bios
     boot_wait: 10s
     boot_order: disk,cdrom
-    http_directory: http
+    http_directory: centos8
     boot_command:
-    - !unsafe '<tab> inst.sshd inst.text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort}}/centos8ks.cfg<enter><wait>'
+    - !unsafe '<tab> inst.sshd inst.text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort}}/ks.cfg<enter><wait>'
     guest_os_type: centos7_64guest
     insecure_connection: "true"
     iso_checksum: none
@@ -52,13 +53,9 @@ centos8_packer_file:
     storage:
     - disk_size: 40906
       disk_thin_provisioned: true
-    export:
-      force: true
-      output_directory: "{{ artifact_directory }}"
-      name: "{{ centos8_vm_name }}-{{ ddmmyy }}"
   provisioners:
   - type: ansible
-    playbook_file: playbook.yml
+    playbook_file: centos8/playbook.yml
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"

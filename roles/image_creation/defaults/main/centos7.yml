@@ -1,14 +1,14 @@
 #Extracting to top level variables because including in a dictionary prevents these "plugin" variables 
 centos7_iso_url: "{{ artifact_server }}/iso/CentOS-7-x86_64-Everything-2003.iso"
 centos7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
-centos7_ssh_username: root
+centos7_ssh_username: sysadmin
 centos7_ssh_password: BadPassword1234$
 centos7_vm_name: centos7
 centos7_files:
-- src: ks.cfg
-  dest: ks.cfg
-- src: playbook.yml
-  dest: playbook.yml
+- src: centos7/ks.cfg
+  dest: centos7/ks.cfg
+- src: centos7/playbook.yml
+  dest: centos7/playbook.yml
 
 #Build the Packer file
 centos7_packer_file:
@@ -21,6 +21,7 @@ centos7_packer_file:
   builders:
   - type: vsphere-iso
     name: centos7_vsphere_iso
+    convert_to_template: true
     CPUs: 2
     RAM: 4096
     RAM_reserve_all: true
@@ -34,7 +35,7 @@ centos7_packer_file:
     disk_controller_type: pvscsi
     firmware: bios
     floppy_files:
-    - ks.cfg
+    - centos7/ks.cfg
     boot_wait: 10s
     boot_order: disk,cdrom,floppy
     boot_command:
@@ -56,13 +57,9 @@ centos7_packer_file:
     storage:
       - disk_size: 40906
         disk_thin_provisioned: true
-    export:
-      force: true
-      output_directory: "{{ artifact_directory }}"
-      name: "{{ centos7_vm_name }}-{{ ddmmyy }}"
   provisioners:
   - type: ansible
-    playbook_file: playbook.yml
+    playbook_file: centos7/playbook.yml
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"

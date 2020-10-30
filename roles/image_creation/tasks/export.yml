@@ -1,0 +1,24 @@
+- community.vmware.vmware_export_ovf:
+    hostname: "{{ vsphere.vcenter_server }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    validate_certs: false
+    name: "{{ batch_item }}"
+    export_dir: "{{ artifact_directory }}/{{ batch_item }}-{{ ddmmyy }}"
+  loop: "{{ batch_elements }}"
+  loop_control:
+    loop_var: "batch_item"
+  async: 1800
+  poll: 0
+  register: ovf_export
+
+- name: Check for OVF export completion
+  async_status:
+    jid: "{{ export_result_item.ansible_job_id }}"
+  loop: "{{ ovf_export.results }}"
+  loop_control:
+    loop_var: "export_result_item"
+  register: ovf_export_status
+  until: ovf_export_status.finished
+  retries: 600

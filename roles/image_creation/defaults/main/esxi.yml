@@ -10,6 +10,7 @@ esxi_packer_file:
   builders:
   - type: vsphere-iso
     name: esxi_vsphere_iso
+    convert_to_template: true
     CPUs: 4
     NestedHV: true
     RAM: 8192
@@ -42,8 +43,3 @@ esxi_packer_file:
     storage:
     - disk_size: 16384
       disk_thin_provisioned: true
-    export:
-      name: "{{ esxi_vars.vm_name }}-{{ ddmmyy }}"
-      force: true
-      output_directory: "{{ artifact_directory }}"
-      directory_permission: "0755"
