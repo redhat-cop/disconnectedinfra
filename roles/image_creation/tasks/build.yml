@@ -53,7 +53,7 @@
   when: export_build
 
 - name: Convert OVF to OVA
-  shell: "ovftool --overwrite {{ artifact_directory }}/{{ item.build_name}}-{{ ddmmyy }}/{{ item.build_name }}-{{ ddmmyy }}.ovf {{artifact_directory }}/{{ item.build_name }}-{{ ddmmyy }}.ova"
+  shell: "ovftool --overwrite {{ artifact_directory }}/{{ ddmmyy }}/{{ item.build_name }}/{{ item.build_name }}.ovf {{artifact_directory }}/{{ item.build_name }}-{{ ddmmyy }}.ova"
   args:
     chdir: "{{ config_directory }}"
   environment: "{{ env }}"
