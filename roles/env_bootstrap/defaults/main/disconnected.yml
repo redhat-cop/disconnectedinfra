@@ -76,12 +76,12 @@ disconnected:
           password: BadPassword1234$
           host: ${self.default_ip_address}
         provisioner:
-          remote-exec:
+        - remote-exec:
             inline:
             - curl --insecure --output katello-ca-consumer-latest.noarch.rpm https://satellite.infrabuild.xyz/pub/katello-ca-consumer-latest.noarch.rpm
             - sudo yum localinstall -y katello-ca-consumer-latest.noarch.rpm
             - sudo subscription-manager register --org='Infrabuild' --activationkey='Default'
-          remote-exec:
+        - remote-exec:
             when: destroy
             on_failure: continue
             inline:
