@@ -10,7 +10,7 @@ vsphere:
   folder: Templates
   network: BUILDNET
   username: administrator@vsphere.infrabuild.xyz
-  password: DunderMifflin1234$
+  password: BadPassword1234$
   esxi_hostname: 192.168.5.202
 rhsm:
   username: redhat_username
@@ -23,7 +23,8 @@ env:
   PACKER_LOG: 1
   PACKER_LOG_PATH: "{{ artifact_directory }}/packerlog.txt"
 #False will only generate config file but not run build
-run_build: false
+run_build: true
+export_build: true
 #Default build filter (use everything)
 build_filter:
 - vyos
@@ -35,12 +36,12 @@ build_filter:
 - rhel7
 - rhel8
 batch_size: 2
+batch_elements: "{{ item }}"
+parallel_builds: 4
 #Filter out any build not specified in the build_filter so you only build what you want
 active_config: "{{ build_list | selectattr('build_name', 'in', build_filter) | list }}" 
-#Make a comman seperated list of the build names within the active build
+#Make a comma seperated list of the build names within the active build
 active_build: "{{ active_config | map(attribute='packer_file.builders') | flatten | map(attribute='name') | list | join(',') }}"
-#This is probably unnecessary now since we don't individually sort build vs config
-#active_build_dict: "{{ active_config | selectattr('should_build', 'eq', 'build') | list }}"
 config_files: "{{ active_config | selectattr('files', 'defined') | map(attribute='files') | list | flatten | unique }}"
 packer_all:
   variables: "{{ active_config | selectattr('packer_file.variables', 'defined') | map(attribute='packer_file.variables') | list | combine }}"
