@@ -21,17 +21,21 @@
 
 - name: Create directory for Terraform environments
   file:
-    path: "{{ config_directory }}/{{ item }}"
+    path: "{{ config_directory }}/{{ item.name }}"
     state: directory
     mode: '01777'
   become: true
-  loop:
-  - disconnected
+  loop: "{{ terraform_file }}"
 
 - name: Copy packer file
   copy: 
     content: "{{ item.content | to_nice_json }}"
     dest: "{{ config_directory }}/{{ item.name }}/{{ item.name }}.tf.json"
     mode: 0644
-  loop:
-    - { name: disconnected, content: "{{ disconnected }}" }
+  loop: "{{ terraform_file }}"
+
+- name: Deploy system
+  community.general.terraform:
+    project_path: "{{ config_directory }}/{{ item.name }}"
+    state: present
+  loop: "{{ terraform_file }}"

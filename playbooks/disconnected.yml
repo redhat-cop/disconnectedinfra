@@ -3,3 +3,9 @@
 
   roles:
   - role: env_bootstrap
+    vars:
+      terraform_file:
+#      - name: disconnected
+#        content: "{{ disconnected }}"
+      - name: esxi_vsphere
+        content: "{{ esxi_vsphere }}"
