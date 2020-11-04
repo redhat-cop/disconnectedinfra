@@ -39,3 +39,5 @@
     project_path: "{{ config_directory }}/{{ item.name }}"
     state: present
   loop: "{{ terraform_file }}"
+  tags:
+  - never

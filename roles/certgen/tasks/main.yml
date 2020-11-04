@@ -119,4 +119,4 @@
     value: "{{ lookup('file', '/' + config_directory + '/' + testcert.domain + '/' + item) }}"
   loop:
   - "{{ testcert.common_name }}.pem" 
-  - "{{ testcert.common_name }}.crt" 
+  - "{{ testcert.common_name }}-fullchain.crt" 
