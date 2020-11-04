@@ -1,0 +1,122 @@
+---
+- name: Create build and artifact directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '01777'
+  loop:
+  - "{{ config_directory }}"
+  become: true
+
+- name: Ensure build temp filesystem is mounted
+  mount:
+    name: "{{ config_directory }}"
+    src: tmpfs
+    fstype: tmpfs
+    opts: size=512m
+    state: mounted
+  become: true
+
+- name: Create http directory for Packer served files
+  file:
+    path: "{{ config_directory }}/{{ item }}"
+    state: directory
+    mode: '01777'
+  become: true
+  loop:
+  - "{{ testcert.domain }}"
+
+- name: Import existing key if available
+  ansible.builtin.copy:
+    content: "{{ account_key }}"
+    dest: "{{ config_directory }}/{{ testcert.domain }}/account-key.pem"
+  when: account_key is defined
+
+- name: Generate account key
+  community.crypto.openssl_privatekey:
+    path: "{{ config_directory }}/{{ testcert.domain }}/account-key.pem"
+    size: 4096
+  when: account_key is not defined
+
+- name: Add account key to parameter store
+  community.aws.aws_ssm_parameter_store:
+    name: "/{{ testcert.domain }}/account_key"
+    string_type: "SecureString"
+    value: "{{ account_key_file }}"
+  when: account_key is not defined 
+
+- name: Import existing key if available
+  ansible.builtin.copy:
+    content: "{{ account_key }}"
+    dest: "{{ config_directory }}/account-key.pem"
+  when: account_key is defined
+
+- name: Generate private key
+  community.crypto.openssl_privatekey:
+    path: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.pem"
+    size: 4096
+
+- name: Generate CSR for private key
+  community.crypto.openssl_csr:
+    path: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.csr"
+    privatekey_path: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.pem"
+    common_name: "{{ testcert.common_name }}" 
+    subject_alt_name: "DNS:{{ testcert.subject_alt_name | join(',DNS:') }}"
+
+- name: create acme challenge
+  community.crypto.acme_certificate:
+    acme_version: 2
+    terms_agreed: yes
+    account_key_src: "{{ config_directory }}/{{ testcert.domain }}/account-key.pem"
+    src: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.csr"
+    cert: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.crt"
+    challenge: dns-01
+    acme_directory: https://acme-v02.api.letsencrypt.org/directory
+    remaining_days: 60
+  register: challenge
+
+- debug: msg="{{ challenge }}"
+
+- community.aws.route53:
+    zone: "{{ testcert.domain }}"
+    record: "{{ challenge.challenge_data[item]['dns-01'].record }}"
+    type: TXT
+    ttl: 60
+    state: present
+    wait: yes
+    value: "{{ challenge.challenge_data[item]['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
+  loop: "{{ [testcert.common_name] + testcert.subject_alt_name }}"
+  when: challenge is changed
+
+- name: validate acme challenge
+  community.crypto.acme_certificate:
+    acme_version: 2 
+    account_key_src: "{{ config_directory }}/{{ testcert.domain }}/account-key.pem"
+    src: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.csr"
+    cert: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.crt"
+    fullchain: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}-fullchain.crt"
+    chain: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}-intermediate.crt"
+    challenge: dns-01
+    acme_directory: https://acme-v02.api.letsencrypt.org/directory
+    remaining_days: 60
+    data: "{{ challenge }}"
+  when: challenge is changed
+
+- community.aws.route53:
+    zone: "{{ testcert.domain }}"
+    record: "{{ item }}"
+    type: TXT
+    state: absent
+    wait: yes
+    # Note: route53 requires TXT entries to be enclosed in quotes
+  loop: "{{ [testcert.common_name] + testcert.subject_alt_name }}"
+  when: challenge is changed
+
+- name: Add account key to parameter store
+  community.aws.aws_ssm_parameter_store:
+    name: "/{{ testcert.domain }}/{{ item }}"
+    string_type: "SecureString"
+    value: "{{ lookup('file', '/' + config_directory + '/' + testcert.domain + '/' + item) }}"
+  loop:
+  - "{{ testcert.common_name }}.pem" 
+  - "{{ testcert.common_name }}.crt" 

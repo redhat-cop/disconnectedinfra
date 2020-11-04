@@ -1,0 +1,64 @@
+esxi_vsphere:
+  terraform:
+    required_providers:
+      packet:
+        source: packethost/packet
+  provider:
+    aws:
+      region: "{{ aws_default_region }}"
+      access_key: "{{ aws_access_key_id }}"
+      secret_key: "{{ aws_secret_access_key }}"
+    vsphere:
+      user: "{{ vsphere.username }}"
+      password: "{{ vsphere.password }}"
+      vsphere_server: "{{ vsphere.vcenter_server }}"
+      allow_unverified_ssl: true
+  data:
+    aws_route53_zone:
+      domain:
+        name: "{{ domain }}."
+    vsphere_datacenter:
+      dc:
+        name: Datacenter
+  resource:
+    packet_device:
+      esxi:
+        hostname: "esxi02.{{ domain }}"
+        plan: c3.medium.x86 
+        facilities: 
+        - dc13
+        operating_system: vmware_esxi_6_7
+        billing_cycle: hourly
+        project_id: "{{ packet_project_id }}"
+        connection:
+          type: ssh
+          user: root
+          password: ${packet_device.esxi.root_password}
+          host: ${packet_device.esxi.network.0.address}
+          timeout: 10m
+        provisioner:
+        - file:
+            content: "{{ esxi_crt }}"
+            destination: /etc/vmware/ssl/rui.crt
+        - file:
+            content: "{{ esxi_key }}"
+            destination: /etc/vmware/ssl/rui.key 
+        - remote-exec:
+            on_failure: continue
+            inline:
+            - /etc/init.d/hostd restart
+    aws_route53_record:
+      esxi02:
+        zone_id: ${data.aws_route53_zone.domain.zone_id}
+        name: esxi02.${data.aws_route53_zone.domain.name}
+        type: A
+        ttl: 300
+        records:
+        - ${packet_device.esxi.network.0.address}
+        allow_overwrite: true
+    vsphere_host:
+      h1:
+        hostname: esxi02.${data.aws_route53_zone.domain.name}
+        username: root
+        password: ${packet_device.esxi.root_password}
+        datacenter: ${data.vsphere_datacenter.dc.id}
