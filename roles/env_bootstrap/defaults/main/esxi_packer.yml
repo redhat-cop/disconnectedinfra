@@ -20,7 +20,16 @@ esxi_vsphere:
     vsphere_datacenter:
       dc:
         name: Datacenter
+  locals:
+    addhost: 0 
+    esxi_host: ${cidrhost(packet_reserved_ip_block.esxi_ip_block.cidr_notation,2)}
+    vsphere_host: ${cidrhost(packet_reserved_ip_block.esxi_ip_block.cidr_notation,3)}
   resource:
+    packet_reserved_ip_block:
+      esxi_ip_block:
+        project_id: "{{ packet_project_id }}"
+        facility: dc13
+        quantity: 8
     packet_device:
       esxi:
         hostname: "esxi02.{{ domain }}"
@@ -30,6 +39,12 @@ esxi_vsphere:
         operating_system: vmware_esxi_6_7
         billing_cycle: hourly
         project_id: "{{ packet_project_id }}"
+        ip_address:
+        - type: public_ipv4
+          cidr: 29
+          reservation_ids:
+          - ${packet_reserved_ip_block.esxi_ip_block.id}
+        - type: private_ipv4
         connection:
           type: ssh
           user: root
@@ -56,9 +71,18 @@ esxi_vsphere:
         records:
         - ${packet_device.esxi.network.0.address}
         allow_overwrite: true
+      vsphere:
+        zone_id: ${data.aws_route53_zone.domain.zone_id}
+        name: vsphere.${data.aws_route53_zone.domain.name}
+        type: A
+        ttl: 300
+        records:
+        - ${local.vsphere_host}
+        allow_overwrite: true
     vsphere_host:
       h1:
-        hostname: esxi02.${data.aws_route53_zone.domain.name}
+        count: ${local.addhost}
+        hostname: esxi02.${aws_route53_record.esxi02.name}
         username: root
         password: ${packet_device.esxi.root_password}
         datacenter: ${data.vsphere_datacenter.dc.id}
