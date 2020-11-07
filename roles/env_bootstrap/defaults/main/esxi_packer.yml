@@ -1,8 +1,33 @@
+esxi_host:
+  hostname: esxi03.infrabuild.xyz
+aws_domain: infrabuild.xyz
+cloudflare_domain: disconnect.blue
+facility: dc13
+esxi_hosts:
+  esxi03.infrabuild.xyz: 
+    hostname: esxi03.infrabuild.xyz
+    domain: infrabuild.xyz
+    key: "{{ lookup('amazon.aws.aws_ssm', '/infrabuild.xyz/vsphere.infrabuild.xyz.pem') }}"
+    crt: "{{ lookup('amazon.aws.aws_ssm', '/infrabuild.xyz/vsphere.infrabuild.xyz-fullchain.crt') }}"
+    dns_provider: route53
+    add_host: false
+  esxi02.disconnect.blue:
+    hostname: esxi02.disconnect.blue
+    domain: disconnect.blue
+    key: "{{ lookup('amazon.aws.aws_ssm', '/disconnect.blue/vsphere.disconnect.blue.pem') }}"
+    crt: "{{ lookup('amazon.aws.aws_ssm', '/disconnect.blue/vsphere.disconnect.blue-fullchain.crt') }}"
+    dns_provider: cloudflare 
+    add_host: false
+route53_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'route53') | items2dict }}" 
+cloudflare_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'cloudflare') | items2dict }}" 
+add_host: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'true') | items2dict }}"
 esxi_vsphere:
   terraform:
     required_providers:
       packet:
         source: packethost/packet
+      cloudflare:
+        source: cloudflare/cloudflare
   provider:
     aws:
       region: "{{ aws_default_region }}"
@@ -13,26 +38,51 @@ esxi_vsphere:
       password: "{{ vsphere.password }}"
       vsphere_server: "{{ vsphere.vcenter_server }}"
       allow_unverified_ssl: true
+    cloudflare:
+      email: "{{ cf_account_email }}"
+      api_key: "{{ cf_account_api_token }}"
   data:
     aws_route53_zone:
       domain:
-        name: "{{ domain }}."
+        name: "{{ aws_domain }}."
+    cloudflare_zones:
+      cloudflare_domain:
+        filter:
+          name: "{{ cloudflare_domain }}."
     vsphere_datacenter:
       dc:
         name: Datacenter
   locals:
-    addhost: 0 
-    esxi_host: ${cidrhost(packet_reserved_ip_block.esxi_ip_block.cidr_notation,2)}
-    vsphere_host: ${cidrhost(packet_reserved_ip_block.esxi_ip_block.cidr_notation,3)}
+    facility: dc13
+    esxi_hosts:
+      esxi03.infrabuild.xyz: 
+        hostname: esxi03.infrabuild.xyz
+        domain: infrabuild.xyz
+        key: "{{ lookup('amazon.aws.aws_ssm', '/infrabuild.xyz/vsphere.infrabuild.xyz.pem') }}"
+        crt: "{{ lookup('amazon.aws.aws_ssm', '/infrabuild.xyz/vsphere.infrabuild.xyz-fullchain.crt') }}"
+        dns_provider: route53
+        add_host: false
+      esxi02.disconnect.blue:
+        hostname: esxi02.disconnect.blue
+        domain: disconnect.blue
+        key: "{{ lookup('amazon.aws.aws_ssm', '/disconnect.blue/vsphere.disconnect.blue.pem') }}"
+        crt: "{{ lookup('amazon.aws.aws_ssm', '/disconnect.blue/vsphere.disconnect.blue-fullchain.crt') }}"
+        dns_provider: cloudflare 
+        add_host: false
+    route53_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'route53') | items2dict }}" 
+    cloudflare_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'cloudflare') | items2dict }}" 
+    add_host: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'true') | items2dict }}"
   resource:
     packet_reserved_ip_block:
       esxi_ip_block:
+        for_each: ${ local.esxi_hosts }
         project_id: "{{ packet_project_id }}"
-        facility: dc13
+        facility: ${ local.facility }
         quantity: 8
     packet_device:
       esxi:
-        hostname: "esxi02.{{ domain }}"
+        for_each: ${ local.esxi_hosts }
+        hostname: ${ each.key }
         plan: c3.medium.x86 
         facilities: 
         - dc13
@@ -43,20 +93,20 @@ esxi_vsphere:
         - type: public_ipv4
           cidr: 29
           reservation_ids:
-          - ${packet_reserved_ip_block.esxi_ip_block.id}
+          - ${ packet_reserved_ip_block.esxi_ip_block[each.key].id }
         - type: private_ipv4
         connection:
           type: ssh
           user: root
-          password: ${packet_device.esxi.root_password}
-          host: ${packet_device.esxi.network.0.address}
+          password: ${ self.root_password }
+          host: ${ self.network.0.address }
           timeout: 10m
         provisioner:
         - file:
-            content: "{{ esxi_crt }}"
+            content: ${ each.value.crt }
             destination: /etc/vmware/ssl/rui.crt
         - file:
-            content: "{{ esxi_key }}"
+            content: ${ each.value.key }
             destination: /etc/vmware/ssl/rui.key 
         - remote-exec:
             on_failure: continue
@@ -64,25 +114,42 @@ esxi_vsphere:
             - /etc/init.d/hostd restart
     aws_route53_record:
       esxi02:
-        zone_id: ${data.aws_route53_zone.domain.zone_id}
-        name: esxi02.${data.aws_route53_zone.domain.name}
+        for_each: ${ local.route53_hosts }
+        zone_id: ${ data.aws_route53_zone.domain.zone_id }
+        name: ${ each.key }
         type: A
         ttl: 300
         records:
-        - ${packet_device.esxi.network.0.address}
+        - ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2) }
         allow_overwrite: true
       vsphere:
-        zone_id: ${data.aws_route53_zone.domain.zone_id}
-        name: vsphere.${data.aws_route53_zone.domain.name}
+        for_each: ${ local.route53_hosts }
+        zone_id: ${ data.aws_route53_zone.domain.zone_id }
+        name: vsphere.${ each.value.domain }
         type: A
         ttl: 300
         records:
-        - ${local.vsphere_host}
+        - ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
         allow_overwrite: true
+    cloudflare_record:
+      esxi:
+        for_each: ${ local.cloudflare_hosts }
+        zone_id: ${ data.cloudflare_zones.cloudflare_domain.zones[0].id }
+        name: ${ each.key }
+        value: ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2) }
+        type: A
+        ttl: 300
+      vsphere:
+        for_each: ${ local.cloudflare_hosts }
+        zone_id: ${ data.cloudflare_zones.cloudflare_domain.zones[0].id }
+        name: vsphere.${ each.value.domain }
+        value: ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
+        type: A
+        ttl: 300
     vsphere_host:
       h1:
-        count: ${local.addhost}
-        hostname: esxi02.${aws_route53_record.esxi02.name}
+        for_each: ${ local.add_host }
+        hostname: ${ each.key }
         username: root
-        password: ${packet_device.esxi.root_password}
-        datacenter: ${data.vsphere_datacenter.dc.id}
+        password: ${ packet_device.esxi[each.key].root_password }
+        datacenter: ${ data.vsphere_datacenter.dc.id }
