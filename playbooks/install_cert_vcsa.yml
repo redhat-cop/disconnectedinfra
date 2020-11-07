@@ -1,0 +1,36 @@
+---
+- hosts: build
+
+  tasks:
+  - name: Enable bash shell on vcsa
+    expect: 
+      command: "sshpass -e ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no root@{{ vcsa_build.vcenter_system_name }} 'shell'"
+      responses:
+        root.*: 
+        - chsh -s /bin/bash root
+        - exit 0
+    vars:
+      vcsa_build: "{{ vcsa_list[0] }}"
+    environment:
+      SSHPASS: "{{ vcsa_build.vcenter_password }}"
+    failed_when: false
+
+  - name: Enable bash shell on vcsa
+    command: "sshpass -e ssh-copy-id -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no root@{{ vcsa_build.vcenter_system_name }}"
+    vars:
+      vcsa_build: "{{ vcsa_list[0] }}"
+    environment:
+      SSHPASS: "{{ vcsa_build.vcenter_password }}"
+
+- hosts: vcsa
+
+  tasks:
+  - name: Copy TLS certificate and key
+    copy:
+      content: "{{ lookup('amazon.aws.aws_ssm', '/' + domain_name + '/' + item) }}"
+      dest: "{{ item }}" 
+    vars:
+      domain_name: "{{ inventory_hostname.split('.')[1] + '.' + inventory_hostname.split('.')[2] }}"
+    loop: 
+    - "{{ inventory_hostname }}.pem"
+    - "{{ inventory_hostname }}-fullchain.crt"
