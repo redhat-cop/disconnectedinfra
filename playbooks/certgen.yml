@@ -11,5 +11,3 @@
     #Change the loop variable so the internal task loops don't conflict
     loop_control:
       loop_var: cert_var
-
-         
