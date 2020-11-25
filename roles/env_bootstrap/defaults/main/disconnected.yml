@@ -1,4 +1,9 @@
 disconnected:
+  terraform:
+    backend:
+      s3:
+        bucket: infrabuild.xyz
+        region: us-east-1 
   variable:
     rhn_username:
     rhn_password:
