@@ -26,11 +26,11 @@
   loop:
   - "{{ testcert.domain }}"
 
-- name: Import existing key if available
-  ansible.builtin.copy:
-    content: "{{ account_key }}"
-    dest: "{{ config_directory }}/{{ testcert.domain }}/account-key.pem"
-  when: account_key is defined
+#- name: Import existing key if available
+#  ansible.builtin.copy:
+#    content: "{{ account_key }}"
+#    dest: "{{ config_directory }}/{{ testcert.domain }}/account-key.pem"
+#  when: account_key is defined
 
 - name: Generate account key
   community.crypto.openssl_privatekey:
@@ -72,11 +72,13 @@
     cert: "{{ config_directory }}/{{ testcert.domain }}/{{ testcert.common_name }}.crt"
     challenge: dns-01
     acme_directory: https://acme-v02.api.letsencrypt.org/directory
-    remaining_days: 0
+    remaining_days: 89
   register: challenge
 
 - debug:
     msg: "{{ challenge }}"
+
+- pause:
 
 - community.aws.route53:
     zone: "{{ testcert.domain }}"
@@ -85,8 +87,9 @@
     ttl: 60
     state: present
     wait: yes
+    overwrite: true
     value: "{{ challenge.challenge_data[item]['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
-  loop: "{{ testcert.subject_alt_name }}"
+  loop: "{{ testcert.dns_names }}"
   when: challenge is changed and testcert.dns_provider == "route53"
 
 - community.general.cloudflare_dns:
@@ -98,7 +101,7 @@
     account_api_token: "{{ cf_account_api_token }}"
     state: present
     value: "{{ challenge.challenge_data[item]['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
-  loop: "{{ testcert.subject_alt_name }}"
+  loop: "{{ testcert.dns_names }}"
   when: challenge is changed and testcert.dns_provider == "cloudflare"
 
 - name: validate acme challenge
@@ -112,7 +115,6 @@
     challenge: dns-01
     acme_directory: https://acme-v02.api.letsencrypt.org/directory
     remaining_days: 60
-    force: "{{ testcert.force }}"
     data: "{{ challenge }}"
   when: challenge is changed
 
@@ -124,7 +126,7 @@
     wait: yes
     # Note: route53 requires TXT entries to be enclosed in quotes
     value: "{{ challenge.challenge_data[item]['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
-  loop: "{{ testcert.subject_alt_name }}"
+  loop: "{{ testcert.dns_names }}"
   when: challenge is changed and testcert.dns_provider == "route53"
   
 - community.general.cloudflare_dns:
@@ -135,7 +137,7 @@
     account_api_token: "{{ cf_account_api_token }}"
     state: absent
     value: "{{ challenge.challenge_data[item]['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
-  loop: "{{ testcert.subject_alt_name }}"
+  loop: "{{ testcert.dns_names }}"
   when: challenge is changed and testcert.dns_provider == "cloudflare"
 
 - name: Add account key to parameter store
