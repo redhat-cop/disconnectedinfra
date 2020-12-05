@@ -15,7 +15,7 @@
     networks: "{u'VM Network':u'{{ vsphere.network }}'}"
     validate_certs: no
     power_on: no
-    ovf: "/build_artifact/{{ item.build_name }}-290920.ovf"
+    ovf: "/build_artifact/{{ item.build_name }}-latest.ova"
   loop: "{{ active_config }}"
   loop_control:
     label: "{{ item.build_name }}"

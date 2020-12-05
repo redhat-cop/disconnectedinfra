@@ -3,6 +3,9 @@ centos7_iso_url: "{{ artifact_server }}/iso/CentOS-7-x86_64-Everything-2003.iso"
 centos7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 centos7_ssh_username: sysadmin
 centos7_ssh_password: BadPassword1234$
+centos7_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
+centos7_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+centos7_ssh_pubkey: "{{ lookup('file', centos7_ssh_pubkey_path) }}"
 centos7_vm_name: centos7
 centos7_files:
 - src: centos7/ks.cfg
@@ -52,7 +55,7 @@ centos7_packer_file:
         network_card: vmxnet3
     vm_name: "{{ centos7_vm_name }}"
     ssh_username: "{{ centos7_ssh_username }}"
-    ssh_password: "{{ centos7_ssh_password }}"
+    ssh_private_key_file: "{{ centos7_ssh_privkey_path }}" 
     notes: "SSH Username {{ centos7_ssh_username }}\nSSH Password {{ centos7_ssh_password }}"
     storage:
       - disk_size: 40906
@@ -63,5 +66,10 @@ centos7_packer_file:
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"
+    user: "{{ centos7_ssh_username }}"
+    ansible_env_vars:
+    - ANSIBLE_HOST_KEY_CHECKING=False
+    ssh_authorized_key_file: "{{ centos7_ssh_pubkey_path }}"
+    use_proxy: false
     only:
     - centos7_vsphere_iso

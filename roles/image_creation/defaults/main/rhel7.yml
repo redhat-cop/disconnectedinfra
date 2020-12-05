@@ -3,6 +3,9 @@ rhel7_iso_url: "{{ artifact_server }}/iso/rhel-server-7.8-x86_64-dvd.iso"
 rhel7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 rhel7_ssh_username: sysadmin
 rhel7_ssh_password: BadPassword1234$
+rhel7_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
+rhel7_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+rhel7_ssh_pubkey: "{{ lookup('file', rhel7_ssh_pubkey_path) }}"
 rhel7_vm_name: rhel7
 rhel7_files:
 - src: rhel7/ks.cfg
@@ -52,7 +55,7 @@ rhel7_packer_file:
         network_card: vmxnet3
     vm_name: "{{ rhel7_vm_name }}"
     ssh_username: "{{ rhel7_ssh_username }}"
-    ssh_password: "{{ rhel7_ssh_password }}"
+    ssh_private_key_file: "{{ rhel7_ssh_privkey_path }}" 
     notes: "SSH Username {{ rhel7_ssh_username }}\nSSH Password {{ rhel7_ssh_password }}"
     storage:
       - disk_size: 40906
@@ -63,5 +66,10 @@ rhel7_packer_file:
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"
+    user: "{{ rhel7_ssh_username }}"
+    ansible_env_vars:
+    - ANSIBLE_HOST_KEY_CHECKING=False
+    ssh_authorized_key_file: "{{ rhel7_ssh_pubkey_path }}"
+    use_proxy: false
     only:
     - rhel7_vsphere_iso

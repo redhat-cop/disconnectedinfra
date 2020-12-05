@@ -37,7 +37,7 @@ build_filter:
 - rhel8
 batch_size: 2
 batch_elements: "{{ item }}"
-parallel_builds: 4
+parallel_builds: 2
 #Filter out any build not specified in the build_filter so you only build what you want
 active_config: "{{ build_list | selectattr('build_name', 'in', build_filter) | list }}" 
 #Make a comma seperated list of the build names within the active build

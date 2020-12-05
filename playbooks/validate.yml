@@ -1,0 +1,7 @@
+---
+- hosts: build
+
+  roles:
+  - role: image_creation
+    vars:
+      action: validate

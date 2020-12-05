@@ -2,6 +2,9 @@ rhel8_iso_url: "{{ artifact_server }}/iso/rhel-8.2-x86_64-dvd.iso"
 rhel8_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 rhel8_ssh_username: sysadmin
 rhel8_ssh_password: BadPassword1234$
+rhel8_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
+rhel8_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+rhel8_ssh_pubkey: "{{ lookup('file', rhel8_ssh_pubkey_path) }}"
 rhel8_vm_name: rhel8
 rhel8_files:
 - src: rhel8/ks.cfg
@@ -48,7 +51,7 @@ rhel8_packer_file:
       network_card: vmxnet3
     vm_name: "{{ rhel8_vm_name }}"
     ssh_username: "{{ rhel8_ssh_username }}"
-    ssh_password: "{{ rhel8_ssh_password }}"
+    ssh_private_key_file: "{{ rhel8_ssh_privkey_path }}" 
     notes: "SSH Username {{ rhel8_ssh_username }}\nSSH Password {{ rhel8_ssh_password }}"
     storage:
     - disk_size: 40906
@@ -59,5 +62,10 @@ rhel8_packer_file:
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"
+    user: "{{ rhel8_ssh_username }}"
+    ansible_env_vars:
+    - ANSIBLE_HOST_KEY_CHECKING=False
+    ssh_authorized_key_file: "{{ rhel8_ssh_pubkey_path }}"
+    use_proxy: false
     only:
     - rhel8_vsphere_iso

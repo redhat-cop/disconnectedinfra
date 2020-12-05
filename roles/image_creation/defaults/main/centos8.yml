@@ -2,6 +2,9 @@ centos8_iso_url: "{{ artifact_server }}/iso/CentOS-8.2.2004-x86_64-dvd1.iso"
 centos8_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 centos8_ssh_username: sysadmin
 centos8_ssh_password: BadPassword1234$
+centos8_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
+centos8_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+centos8_ssh_pubkey: "{{ lookup('file', centos8_ssh_pubkey_path) }}"
 centos8_vm_name: centos8
 centos8_files:
 - src: centos8/ks.cfg
@@ -48,7 +51,7 @@ centos8_packer_file:
       network_card: vmxnet3
     vm_name: "{{ centos8_vm_name }}"
     ssh_username: "{{ centos8_ssh_username }}"
-    ssh_password: "{{ centos8_ssh_password }}"
+    ssh_private_key_file: "{{ centos8_ssh_privkey_path }}" 
     notes: "SSH Username {{ centos8_ssh_username }}\nSSH Password {{ centos8_ssh_password }}"
     storage:
     - disk_size: 40906
@@ -59,5 +62,10 @@ centos8_packer_file:
     extra_arguments:
     - --extra-vars
     - "rhsm_username={{ rhsm.username }} rhsm_password={{ rhsm.password }} rhsm_pool_id={{ rhsm.pool_id }}"
+    user: "{{ centos7_ssh_username }}"
+    ansible_env_vars:
+    - ANSIBLE_HOST_KEY_CHECKING=False
+    ssh_authorized_key_file: "{{ centos8_ssh_pubkey_path }}"
+    use_proxy: false
     only:
     - centos8_vsphere_iso
