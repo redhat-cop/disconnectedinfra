@@ -1,7 +1,7 @@
 aws_domain: infrabuild.xyz
 cloudflare_domain: disconnect.blue
 facility: dc13
-esxi_hosts: "{{ item.content }}"
+esxi_hosts: "{{ item.override }}"
 route53_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'route53') | items2dict }}" 
 cloudflare_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'cloudflare') | items2dict }}" 
 add_host: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'true') | items2dict }}"

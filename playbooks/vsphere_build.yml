@@ -9,3 +9,4 @@
 #        content: "{{ disconnected }}"
       - name: esxi_vsphere
         content: "{{ esxi_vsphere }}"
+        override: "{{ esxi_hosts }}"
