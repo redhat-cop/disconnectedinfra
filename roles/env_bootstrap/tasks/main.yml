@@ -27,7 +27,7 @@
   become: true
   loop: "{{ terraform_file }}"
 
-- name: Copy packer file
+- name: Copy Terraform file
   copy: 
     content: "{{ item.content | to_nice_json }}"
     dest: "{{ config_directory }}/{{ item.name }}/{{ item.name }}.tf.json"
