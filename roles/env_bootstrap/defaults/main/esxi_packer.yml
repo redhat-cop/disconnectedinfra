@@ -1,23 +1,7 @@
-esxi_host:
-  hostname: esxi03.infrabuild.xyz
 aws_domain: infrabuild.xyz
 cloudflare_domain: disconnect.blue
 facility: dc13
-esxi_hosts:
-  esxi03.infrabuild.xyz: 
-    hostname: esxi03.infrabuild.xyz
-    domain: infrabuild.xyz
-    key: "{{ lookup('amazon.aws.aws_ssm', '/infrabuild.xyz/vsphere.infrabuild.xyz.pem') }}"
-    crt: "{{ lookup('amazon.aws.aws_ssm', '/infrabuild.xyz/vsphere.infrabuild.xyz-fullchain.crt') }}"
-    dns_provider: route53
-    add_host: false
-  esxi02.disconnect.blue:
-    hostname: esxi02.disconnect.blue
-    domain: disconnect.blue
-    key: "{{ lookup('amazon.aws.aws_ssm', '/disconnect.blue/vsphere.disconnect.blue.pem') }}"
-    crt: "{{ lookup('amazon.aws.aws_ssm', '/disconnect.blue/vsphere.disconnect.blue-fullchain.crt') }}"
-    dns_provider: cloudflare 
-    add_host: false
+esxi_hosts: "{{ item.content }}"
 route53_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'route53') | items2dict }}" 
 cloudflare_hosts: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'cloudflare') | items2dict }}" 
 add_host: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'true') | items2dict }}"
@@ -30,17 +14,17 @@ esxi_vsphere:
         source: cloudflare/cloudflare
   provider:
     aws:
-      region: "{{ aws_default_region }}"
-      access_key: "{{ aws_access_key_id }}"
-      secret_key: "{{ aws_secret_access_key }}"
+      region: "{{ aws.default_region }}"
+      access_key: "{{ aws.access_key_id }}"
+      secret_key: "{{ aws.secret_access_key }}"
     vsphere:
       user: "{{ vsphere.username }}"
       password: "{{ vsphere.password }}"
       vsphere_server: "{{ vsphere.vcenter_server }}"
       allow_unverified_ssl: true
     cloudflare:
-      email: "{{ cf_account_email }}"
-      api_key: "{{ cf_account_api_token }}"
+      email: "{{ cloudflare.account_email }}"
+      api_key: "{{ cf.account_api_key }}"
   data:
     aws_route53_zone:
       domain:
@@ -51,7 +35,7 @@ esxi_vsphere:
           name: "{{ cloudflare_domain }}."
     vsphere_datacenter:
       dc:
-        name: Datacenter
+        name: "{{ vsphere.datacenter }}"
   locals:
     facility: dc13
     esxi_hosts:
@@ -83,7 +67,7 @@ esxi_vsphere:
       esxi:
         for_each: ${ local.esxi_hosts }
         hostname: ${ each.key }
-        plan: c3.medium.x86 
+        plan: m3.large.x86 
         facilities: 
         - dc13
         operating_system: vmware_esxi_6_7
@@ -98,6 +82,7 @@ esxi_vsphere:
         connection:
           type: ssh
           user: root
+          private_key: "{{ lookup('file', ansible_env.HOME + '/.ssh/id_rsa') }}"
           password: ${ self.root_password }
           host: ${ self.network.0.address }
           timeout: 10m
