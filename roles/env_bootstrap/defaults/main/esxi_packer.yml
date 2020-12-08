@@ -24,7 +24,7 @@ esxi_vsphere:
       allow_unverified_ssl: true
     cloudflare:
       email: "{{ cloudflare.account_email }}"
-      api_key: "{{ cf.account_api_key }}"
+      api_key: "{{ cloudflare.account_api_key }}"
   data:
     aws_route53_zone:
       domain:
