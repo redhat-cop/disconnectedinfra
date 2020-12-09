@@ -4,7 +4,7 @@ facility: dc13
 esxi_hosts: "{{ esxi_hosts_inventory }}"
 route53_hosts_template: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'route53') | list | items2dict }}" 
 cloudflare_hosts_template: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'cloudflare') | list | items2dict }}" 
-add_host_template: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'true') | list | items2dict }}"
+add_host_template: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'equalto', True) | list | items2dict }}"
 esxi_vsphere:
   terraform:
     required_providers:
