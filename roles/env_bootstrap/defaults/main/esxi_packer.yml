@@ -17,11 +17,6 @@ esxi_vsphere:
       region: "{{ aws.default_region }}"
       access_key: "{{ aws.access_key_id }}"
       secret_key: "{{ aws.secret_access_key }}"
-    vsphere:
-      user: "{{ vsphere.username }}"
-      password: "{{ vsphere.password }}"
-      vsphere_server: "{{ vsphere.vcenter_server }}"
-      allow_unverified_ssl: true
     cloudflare:
       email: "{{ cloudflare.account_email }}"
       api_key: "{{ cloudflare.account_api_key }}"
@@ -35,20 +30,17 @@ esxi_vsphere:
       cloudflare_domain:
         filter:
           name: "{{ cloudflare_domain }}."
-    vsphere_datacenter:
-      dc:
-        name: "{{ vsphere.datacenter }}"
   locals:
     facility: dc13
     esxi_hosts: "{{ esxi_hosts_inventory }}"
     route53_hosts: "{{ route53_hosts_template | default([]) }}" 
     cloudflare_hosts: "{{ cloudflare_hosts_template | default([]) }}" 
-    add_host: "{{ add_hosts_template | default([]) }}"
+    add_host: "{{ add_host_template | default([]) }}"
   resource:
     packet_reserved_ip_block:
       esxi_ip_block:
         for_each: ${ local.esxi_hosts }
-        project_id: "{{ packet_project_id }}"
+        project_id: "{{ equinox_metal.project_id }}"
         facility: ${ local.facility }
         quantity: 8
     packet_device:
@@ -60,7 +52,7 @@ esxi_vsphere:
         - dc13
         operating_system: vmware_esxi_6_7
         billing_cycle: hourly
-        project_id: "{{ packet_project_id }}"
+        project_id: "{{ equinox_metal.project_id }}"
         ip_address:
         - type: public_ipv4
           cidr: 29
@@ -119,10 +111,3 @@ esxi_vsphere:
         value: ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
         type: A
         ttl: 300
-    vsphere_host:
-      h1:
-        for_each: ${ local.add_host }
-        hostname: ${ each.key }
-        username: root
-        password: ${ packet_device.esxi[each.key].root_password }
-        datacenter: ${ data.vsphere_datacenter.dc.id }
