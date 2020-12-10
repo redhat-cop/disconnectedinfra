@@ -1,3 +1,4 @@
+esxi_password: BadPassword1234$
 aws_domain: infrabuild.xyz
 cloudflare_domain: disconnect.blue
 terraform_state: present
@@ -78,6 +79,7 @@ esxi_vsphere:
             on_failure: continue
             inline:
             - /etc/init.d/hostd restart
+            - echo "{{ esxi_password }}" | passwd --stdin
     aws_route53_record:
       esxi02:
         for_each: ${ local.route53_hosts }
