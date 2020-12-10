@@ -9,8 +9,6 @@
     url: "{{ vcsa_iso_url }}" 
     dest: /mnt/vcsa.iso
   become: yes
-  tags:
-  - never
 
 - name: Mount DVD's
   mount:
@@ -20,56 +18,37 @@
     opts: ro,noauto
     state: mounted
   become: true
-  tags:
-  - never
 
 - name: Install libsnl to use OVFTool on Enterprise Linux
   yum:
     name: libnsl
     state: latest
   become: true
-  tags:
-  - never
 
 - name: Install VCSA
-  command: "/mnt/vcsa/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ config_directory }}/embedded_vCSA_on_ESXi_packet.json"
-  tags:
-  - never
-      
-- name: Check for vCenter liveness
-  uri:
-    url: "https://{{ vcenter.ipv4 }}"
-    validate_certs: false
-    method: GET
-  register: vcenter_result
-  until: esxi_result.status == 200
-  retries: 720
-  delay: 5
-  tags:
-  - never
+  command: "/mnt/vcsa/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ config_directory }}/{{ vcsa_config_file_name }}"
+
+- ansible.builtin.pause:
+    minutes: 5
 
 - name: Add a datacenter
   vmware_datacenter:
-    hostname: "{{ vcenter.ipv4 }}"
-    username: "administrator@{{ vcenter.domain }}" 
-    password: "{{ vcenter.password }}" 
+    hostname: "{{ vcsa_build.vcenter_ip }}"
+    username: "administrator@{{ vcsa_build.vcenter_system_name }}" 
+    password: "{{ vcsa_build.vcenter_password }}" 
     validate_certs: no
     datacenter_name: Datacenter
     state: present
-  tags:
-  - never
 
 - name: Add an ESXi host
   vmware_host:
-    hostname: "{{ vcenter.ipv4 }}"
-    username: "administrator@{{ vcenter.domain }}" 
-    password: "{{ vcenter.password }}" 
+    hostname: "{{ vcsa_build.vcenter_ip }}"
+    username: "administrator@{{ vcsa_build.vcenter_system_name }}" 
+    password: "{{ vcsa_build.vcenter_password }}" 
     validate_certs: no
     datacenter_name: Datacenter
     folder: /Datacenter/host
-    esxi_hostname: "{{ esxi.ipv4 }}"
+    esxi_hostname: "{{ vcsa_build.esxi_hostname }}"
     esxi_username: root
-    esxi_password: "{{ esxi.root_password }}"
+    esxi_password: "{{ vcsa_build.esxi_password }}"
     state: present
-  tags:
-  - never

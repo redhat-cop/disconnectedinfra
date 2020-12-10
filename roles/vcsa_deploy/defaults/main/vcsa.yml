@@ -1,5 +1,15 @@
 vcsa_iso_url: "{{ artifact_server }}/iso/VMware-VCSA-all-6.7.0-15132721.iso"
 vcsa_config_file_name: "{{ vcsa_build.vcenter_system_name }}.json"
+vcsa_build:
+  esxi_hostname: "{{ vsphere.esxi_hostname }}"
+  esxi_password: "{{ vsphere.esxi_password }}"
+  vcenter_ip: "{{ lookup('dig', 'vsphere.infrabuild.xyz') }}"
+  vcenter_prefix: 29
+  vcenter_gateway: "{{ lookup('dig', 'vsphere.infrabuild.xyz') + '/29') | ansible.netcommon.ipaddr('first_usable') }}"
+  vcenter_system_name: "{{ vsphere.vcenter_server }}"
+  vcenter_password: "{{ vsphere.password }}"
+  sso_password: "{{ vsphere.password }}"
+  sso_domain_name: "{{ vsphere.vcenter_server }}"
 vcsa_esxi:
   __version: "2.13.0"
   __comments: Sample template to deploy a vCenter Server Appliance with an embedded Platform Services Controller on an ESXi host

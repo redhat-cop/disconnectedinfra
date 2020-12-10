@@ -2,6 +2,11 @@
 - hosts: build
 
   tasks:
+  - name: Get the root certificate of Lets Encrypt
+    get_url:
+      url: https://censys.io/certificates/96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6/pem/raw
+      dest: /build_config/esxi_vsphere/rootca.pem
+
   - name: Enable bash shell on vcsa
     expect: 
       command: "sshpass -e ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no root@{{ vcsa_build.vcenter_system_name }} 'shell'"
@@ -12,15 +17,15 @@
     vars:
       vcsa_build: "{{ vcsa_list[0] }}"
     environment:
-      SSHPASS: "{{ vcsa_build.vcenter_password }}"
+      SSHPASS: "{{ vsphere.password }}"
     failed_when: false
 
-  - name: Enable bash shell on vcsa
+  - name: Validate login worked
     command: "sshpass -e ssh-copy-id -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no root@{{ vcsa_build.vcenter_system_name }}"
     vars:
       vcsa_build: "{{ vcsa_list[0] }}"
     environment:
-      SSHPASS: "{{ vcsa_build.vcenter_password }}"
+      SSHPASS: "{{ vsphere.password }}"
 
 - hosts: vcsa
 
@@ -34,3 +39,8 @@
     loop: 
     - "{{ inventory_hostname }}.pem"
     - "{{ inventory_hostname }}-fullchain.crt"
+
+  - name: Get the root certificate of Lets Encrypt
+    get_url:
+      url: https://censys.io/certificates/96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6/pem/raw
+      dest: /root/esxi_vsphere/rootca.pem
