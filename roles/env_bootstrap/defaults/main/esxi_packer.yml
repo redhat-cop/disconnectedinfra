@@ -1,5 +1,6 @@
 aws_domain: infrabuild.xyz
 cloudflare_domain: disconnect.blue
+terraform_state: present
 facility: dc13
 esxi_hosts: "{{ esxi_hosts_inventory }}"
 route53_hosts_template: "{{ esxi_hosts | dict2items | selectattr('value.dns_provider', 'equalto', 'route53') | list | items2dict }}" 

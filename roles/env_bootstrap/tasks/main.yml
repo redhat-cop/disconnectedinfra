@@ -37,7 +37,7 @@
 - name: Deploy system
   community.general.terraform:
     project_path: "{{ config_directory }}/{{ item.name }}"
-    state: present
+    state: "{{ terraform_state }}"
   loop: "{{ terraform_file }}"
   tags:
   - never
