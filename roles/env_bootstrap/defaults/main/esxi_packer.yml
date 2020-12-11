@@ -13,7 +13,9 @@ esxi_vsphere:
       s3:
         bucket: "{{ esxi_host_bucket }}"
         key: esxi 
-        region: us-east-1
+        region: "{{ aws.default_region }}"
+        access_key: "{{ aws.access_key_id }}"
+        secret_key: "{{ aws.secret_access_key }}"
     required_providers:
       packet:
         source: packethost/packet
