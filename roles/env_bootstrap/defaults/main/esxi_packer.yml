@@ -44,7 +44,7 @@ esxi_vsphere:
         for_each: ${ local.esxi_hosts }
         project_id: "{{ equinox_metal.project_id }}"
         facility: ${ local.facility }
-        quantity: 8
+        quantity: 16
     packet_device:
       esxi:
         for_each: ${ local.esxi_hosts }
@@ -57,7 +57,7 @@ esxi_vsphere:
         project_id: "{{ equinox_metal.project_id }}"
         ip_address:
         - type: public_ipv4
-          cidr: 29
+          cidr: 28
           reservation_ids:
           - ${ packet_reserved_ip_block.esxi_ip_block[each.key].id }
         - type: private_ipv4
