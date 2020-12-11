@@ -9,6 +9,11 @@ cloudflare_hosts_template: "{{ esxi_hosts | dict2items | selectattr('value.dns_p
 add_host_template: "{{ esxi_hosts | dict2items | selectattr('value.add_host', 'equalto', True) | list | items2dict }}"
 esxi_vsphere:
   terraform:
+    backend:
+      s3:
+        bucket: "{{ esxi_host_bucket }}"
+        key: esxi 
+        region: us-east-1
     required_providers:
       packet:
         source: packethost/packet
