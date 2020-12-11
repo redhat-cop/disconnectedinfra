@@ -38,6 +38,7 @@
   community.general.terraform:
     project_path: "{{ config_directory }}/{{ item.name }}"
     state: "{{ terraform_state }}"
+    force_init: yes
   loop: "{{ terraform_file }}"
   tags:
   - never
