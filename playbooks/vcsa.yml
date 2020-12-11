@@ -9,4 +9,3 @@
     loop: "{{ vcsa_list }}"
     loop_control:
       loop_var: vcsa_var
-    tags: never
