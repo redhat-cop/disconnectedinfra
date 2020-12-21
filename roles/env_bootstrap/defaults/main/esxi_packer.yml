@@ -62,6 +62,7 @@ esxi_vsphere:
         operating_system: vmware_esxi_6_7
         billing_cycle: hourly
         project_id: "{{ equinox_metal.project_id }}"
+        hardware_reservation_id: next-available
         ip_address:
         - type: public_ipv4
           cidr: 28
