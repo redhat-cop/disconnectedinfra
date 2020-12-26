@@ -44,6 +44,18 @@
     state: present
   environment: "{{ vsphere_env }}"
 
+- name: Add portgroup to dvSwitch
+  community.vmware.vmware_dvs_portgroup:
+    portgroup_name: "{{ vsphere.portgroupname }}"
+    vlan_id: 120
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+    switch_name: "{{ vsphere.switch }}"
+  environment: "{{ vsphere_env }}"
+    
+  
+
 - name: Query ESXi facts
   community.vmware.vmware_host_facts:
     esxi_hostname: "{{ vsphere.esxi_hostname }}"       
