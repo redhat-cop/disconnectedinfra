@@ -2,8 +2,8 @@ rhel8_iso_url: "{{ artifact_server }}/iso/rhel-8.2-x86_64-dvd.iso"
 rhel8_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 rhel8_ssh_username: sysadmin
 rhel8_ssh_password: BadPassword1234$
-rhel8_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
-rhel8_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+rhel8_ssh_privkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa"
+rhel8_ssh_pubkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa.pub"
 rhel8_ssh_pubkey: "{{ lookup('file', rhel8_ssh_pubkey_path) }}"
 rhel8_vm_name: rhel8
 rhel8_files:
