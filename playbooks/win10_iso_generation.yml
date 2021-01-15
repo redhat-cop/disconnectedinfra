@@ -1,0 +1,9 @@
+---
+- hosts: packer
+  gather_facts: false
+
+  tasks:
+  - include_role:
+      name: iso_generation
+    vars:
+      dispatch: win10

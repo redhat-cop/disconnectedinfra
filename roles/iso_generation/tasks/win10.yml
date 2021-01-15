@@ -1,0 +1,64 @@
+---
+- name: Download Windows ISO
+  ansible.builtin.get_url:
+    url: "{{ artifact_server }}/iso/{{ item.iso }}"
+    tmp_dest: "{{ explode_directory }}"
+    dest: "{{ explode_directory }}/{{ item.iso }}"
+  loop: "{{ isos }}"
+
+- name: Extract ISO to inject autounattend.xml
+  shell: "7z x -aoa -o{{ item.explode_dir }}/ {{ item.iso }}"
+  args:
+    chdir: "{{ explode_directory }}"
+  loop: "{{ isos }}"
+
+- name: Template Autoattend.xml to directory
+  template:
+    src: "{{ item.build_file }}"
+    dest: "{{ explode_directory }}/{{ item.explode_dir }}/autounattend.xml"
+  loop: "{{ isos }}"
+
+- name: Create new ISO
+  shell: "{{ item.iso_build_command }}"
+  args:
+    chdir: "{{ explode_directory }}"
+  loop: "{{ isos }}"
+  
+- name: Copy file to vSphere
+  community.vmware.vsphere_copy:
+    hostname: "{{ vsphere.vcenter_server }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    validate_certs: no
+    src: "{{ explode_directory }}/{{ remastered_iso }}"    
+    datacenter: "{{ vsphere.datacenter }}"
+    datastore: "{{ vsphere.datastore }}"
+    dest: "/{{ item.remastered_iso }}"
+  loop: "{{ isos }}"
+
+- name: Build a VM from this disk
+  community.vmware.vmware_guest:
+    folder: /Datacenter/vm/Templates
+    name: "TEST_{{ item.explode_dir }}"
+    state: poweredon
+    guest_id: windows9_64Guest
+    datacenter: Datacenter
+    esxi_hostname: 10.15.15.206
+    disk:
+    - size_gb: 100
+      type: thin
+      datastore: DATASTORE01
+    cdrom:
+      iso_path: '[DATASTORE01] CUSTOM_WIN10.iso'
+      type: iso
+    hardware:
+      memory_mb: 4096
+      num_cpus: 4
+      scsi: lsilogicsas
+      boot_firmware: efi
+    networks:
+    - name: 1701 - OFFNET
+      mac: 00:50:56:AA:BB:CA
+      device_type: e1000e
+  environment: "{{ env }}"
+  loop: "{{ isos }}"

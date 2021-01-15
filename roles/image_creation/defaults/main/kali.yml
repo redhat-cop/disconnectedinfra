@@ -1,5 +1,5 @@
 #Extracting to top level variables because including in a dictionary prevents these "plugin" variables 
-kali_iso_url: "{{ artifact_server }}/iso/kali-linux-2020.3-installer-amd64.iso"
+kali_iso_url: "{{ artifact_server }}/iso/kali-linux-2020.4-installer-amd64.iso"
 kali_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 kali_ssh_username: sysadmin
 kali_ssh_password: sysadmin

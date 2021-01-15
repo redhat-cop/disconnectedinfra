@@ -2,3 +2,20 @@ esxi_ks_name: ks_cust.cfg
 iso_name: custom_esxi.iso
 explode_directory: /build_explode
 artifact_directory: /build_artifact
+
+isos:
+- iso: 19042.631.201119-0144.20h2_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso
+  build_file: autounattend_10.xml
+  explode_dir: WIN10
+  remastered_iso: CUSTOM_WIN10.iso
+  iso_build_command: genisoimage -relaxed-filenames -allow-limited-size -R -J -b boot/etfsboot.com -no-emul-boot -boot-load-size 8 -eltorito-alt-boot -e efi/microsoft/boot/efisys_noprompt.bin -no-emul-boot -o CUSTOM_WIN10.iso WIN10
+- iso: 17763.737.190906-2324.rs5_release_svc_refresh_SERVER_EVAL_x64FRE_en-us_1.iso
+  build_file: autounattend_2019.xml
+  explode_dir: WIN2019
+  remastered_iso: CUSTOM_WIN2019.iso
+  iso_build_command: genisoimage -relaxed-filenames -allow-limited-size -R -J -b boot/etfsboot.com -no-emul-boot -boot-load-size 8 -eltorito-alt-boot -e efi/microsoft/boot/efisys_noprompt.bin -no-emul-boot -o CUSTOM_WIN2019.iso WIN2019
+- iso: Windows_Server_2016_Datacenter_EVAL_en-us_14393_refresh.iso
+  build_file: autounattend_2016.xml
+  explode_dir: WIN2016
+  remastered_iso: CUSTOM_WIN2016.iso
+  iso_build_command: genisoimage -relaxed-filenames -allow-limited-size -R -J -b boot/etfsboot.com -no-emul-boot -boot-load-size 8 -eltorito-alt-boot -e efi/microsoft/boot/efisys_noprompt.bin -no-emul-boot -o CUSTOM_WIN2016.iso WIN2016
