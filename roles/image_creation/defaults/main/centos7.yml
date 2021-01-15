@@ -3,8 +3,8 @@ centos7_iso_url: "{{ artifact_server }}/iso/CentOS-7-x86_64-Everything-2003.iso"
 centos7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 centos7_ssh_username: sysadmin
 centos7_ssh_password: BadPassword1234$
-centos7_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
-centos7_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+centos7_ssh_privkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa"
+centos7_ssh_pubkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa.pub"
 centos7_ssh_pubkey: "{{ lookup('file', centos7_ssh_pubkey_path) }}"
 centos7_vm_name: centos7
 centos7_files:

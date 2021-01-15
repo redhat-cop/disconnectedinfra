@@ -1,0 +1,15 @@
+s3_url: https://nyc3.digitaloceanspaces.com
+bucket: bucketybucket
+file_path: pathy/path/path
+#Build a large list of everything to be downloaded
+flattened_ovf_files: "{{ ovf_files.results | map(attribute='s3_keys') | flatten }}"
+#JMESPath query for NVME drives
+nvme_drive_search: "config.storageDevice.scsiLun[?contains(canonicalName,'NVMe')].canonicalName"
+vms:
+- centos7
+- centos8
+- rhel7
+- rhel8
+- esxi
+- pfsense
+- vyos

@@ -1,0 +1,142 @@
+---
+- name: Add a datacenter
+  community.vmware.vmware_datacenter:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    state: present
+  environment: "{{ vsphere_env }}"
+
+- name: Add an cluster to the datacenter
+  community.vmware.vmware_cluster:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    cluster_name: "{{ vsphere.cluster }}"
+  environment: "{{ vsphere_env }}"
+
+- name: Enable DRS on the cluster to make scheduling easier
+  community.vmware.vmware_cluster_drs:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    cluster_name: "{{ vsphere.cluster }}"
+    enable_drs: true
+  environment: "{{ vsphere_env }}"
+
+- name: Add an ESXi host
+  community.vmware.vmware_host:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    cluster: "{{ vsphere.cluster }}"
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    esxi_username: root
+    esxi_password: "{{ vsphere.esxi_password }}"
+    state: present
+  environment: "{{ vsphere_env }}"
+
+- name: Create dvSwitch
+  community.vmware.vmware_dvswitch:
+    discovery_proto: disabled
+    datacenter_name: "{{ vsphere.datacenter }}"
+    uplink_quantity: 1
+    switch_name: "{{ vsphere.switch }}"
+    version: 6.6.0
+  environment: "{{ vsphere_env }}"
+
+- name: Add host to dvSwitch
+  community.vmware.vmware_dvs_host:
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    switch_name: "{{ vsphere.switch }}"
+    state: present
+  environment: "{{ vsphere_env }}"
+
+- name: Add portgroup to dvSwitch
+  community.vmware.vmware_dvs_portgroup:
+    portgroup_name: "{{ vsphere.portgroupname }}"
+    vlan_id: 120
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+    switch_name: "{{ vsphere.switch }}"
+  environment: "{{ vsphere_env }}"
+    
+  
+
+- name: Query ESXi facts
+  community.vmware.vmware_host_facts:
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"       
+    schema: vsphere
+  environment: "{{ vsphere_env }}"
+  register: esxihostfacts
+
+- name: Identify the NVME drives
+  set_fact:
+    nvmedrives: "{{ esxihostfacts.ansible_facts | to_json | from_json | json_query(nvme_drive_search) }}"
+
+- name: Create NVME Datastore
+  community.vmware.vmware_host_datastore:
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    datastore_name: "NVME0{{ ansible_loop.index }}"
+    datastore_type: vmfs 
+    vmfs_device_name: "{{ item }}"
+    vmfs_version: 6
+  environment: "{{ vsphere_env }}"
+  loop: "{{ nvmedrives }}"
+  loop_control:
+    extended: yes
+
+- name: Create NVME Datastore Cluster
+  community.vmware.vmware_datastore_cluster:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    datastore_cluster_name: NVMECLUSTER
+    enable_sdrs: True
+    automation_level: automated
+    enable_io_loadbalance: yes
+  environment: "{{ vsphere_env }}"
+
+- name: Add datastores to NVME Cluster
+  community.vmware.vmware_datastore_cluster_manager:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    datastore_cluster_name: NVMECLUSTER
+    datastores: "NVME0{{ ansible_loop.index }}"
+    state: present 
+  environment: "{{ vsphere_env }}"
+  loop: "{{ nvmedrives }}"
+  loop_control:
+    extended: yes
+
+- name: List OVF's
+  amazon.aws.aws_s3:
+    s3_url: https://nyc3.digitaloceanspaces.com
+    bucket: "{{ bucket }}"
+    mode: list
+    prefix: "{{ file_path }}/{{ item }}"
+    marker: "{{ file_path }}/{{ item }}"
+    rgw: True
+  register: ovf_files
+  loop: "{{ vms }}"
+  environment: "{{ digital_ocean_spaces_env }}"
+
+- name: Download OVF's from Digital Ocean
+  amazon.aws.aws_s3:
+    s3_url: https://nyc3.digitaloceanspaces.com
+    bucket: "{{ bucket }}"
+    mode: get
+    object: "{{ item }}"
+    dest: "/build_artifact/{{ item|basename }}"
+    rgw: True
+  environment: "{{ digital_ocean_spaces_env }}"
+  loop: "{{ flattened_ovf_files }}"
+
+- name: Add template to vCenter
+  community.vmware.vmware_deploy_ovf:
+    datacenter: "{{ vsphere.datacenter }}"
+    cluster: "{{ vsphere.cluster }}"
+    datastore: NVMECLUSTER
+    name: "{{ item }}"
+    networks: "{u'VM Network':u'VM Network'}"
+    power_on: no
+    ovf: "/build_artifact/{{ item }}.ovf"
+  environment: "{{ vsphere_env }}" 
+  loop: "{{ vms }}"
+
+- name: Mark VM as a template
+  community.vmware.vmware_guest:
+    name: "{{ item }}"
+    is_template: true
+  environment: "{{ vsphere_env }}"
+  loop: "{{ vms }}"

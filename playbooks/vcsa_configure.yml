@@ -1,0 +1,7 @@
+---
+- hosts: build
+  gather_facts: false
+
+  tasks:
+  - include_role:
+      name: vcsa_configure

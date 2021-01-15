@@ -1,0 +1,15 @@
+---
+- hosts: packer
+
+  tasks:
+  - name: Create images
+    include_role:
+      name: image_creation
+    vars:
+      action: build
+
+  - name: Validate images
+    include_role:
+      name: image_creation
+    vars:
+      action: validate

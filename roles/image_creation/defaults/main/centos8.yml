@@ -2,8 +2,8 @@ centos8_iso_url: "{{ artifact_server }}/iso/CentOS-8.2.2004-x86_64-dvd1.iso"
 centos8_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 centos8_ssh_username: sysadmin
 centos8_ssh_password: BadPassword1234$
-centos8_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
-centos8_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+centos8_ssh_privkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa"
+centos8_ssh_pubkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa.pub"
 centos8_ssh_pubkey: "{{ lookup('file', centos8_ssh_pubkey_path) }}"
 centos8_vm_name: centos8
 centos8_files:

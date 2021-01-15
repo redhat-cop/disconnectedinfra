@@ -3,8 +3,8 @@ rhel7_iso_url: "{{ artifact_server }}/iso/rhel-server-7.8-x86_64-dvd.iso"
 rhel7_mac_address: "{{ '00:50:56:A8' | random_mac }}"
 rhel7_ssh_username: sysadmin
 rhel7_ssh_password: BadPassword1234$
-rhel7_ssh_privkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa"
-rhel7_ssh_pubkey_path: "{{ playbook_dir }}/insecure_ssh_key/id_rsa.pub"
+rhel7_ssh_privkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa"
+rhel7_ssh_pubkey_path: "{{ playbook_dir }}/../insecure_ssh_key/id_rsa.pub"
 rhel7_ssh_pubkey: "{{ lookup('file', rhel7_ssh_pubkey_path) }}"
 rhel7_vm_name: rhel7
 rhel7_files:

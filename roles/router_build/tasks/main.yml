@@ -1,0 +1,14 @@
+- name: Create build directory
+  file:
+    state: directory
+    path: /build_config/terraform_test
+
+- name: Add Terraform files to system
+  template:
+    src: "single-vm/{{ item }}"
+    dest: "/build_config/terraform_test"
+  loop:
+  - metadata.tpl
+  - vsphere.tf
+  - variables.tf
+  - userdata.tpl
