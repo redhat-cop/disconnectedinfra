@@ -9,3 +9,5 @@
     project_path: "{{ project_path }}"
     state: "{{ terraform_state }}"
     force_init: yes
+  environment:
+    root_password: "{{ root_password }}"
