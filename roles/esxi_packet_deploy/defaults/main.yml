@@ -1,4 +1,4 @@
 ---
 project_path: "{{ playbook_dir }}"
-terraform_state: present
+terraform_state: apply
 root_password: BadPassword1234$
