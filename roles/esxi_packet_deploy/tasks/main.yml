@@ -10,4 +10,4 @@
     state: "{{ terraform_state }}"
     force_init: yes
   environment:
-    root_password: "{{ root_password }}"
+    TF_VAR_root_password: "{{ root_password }}"
