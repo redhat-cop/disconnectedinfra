@@ -1,0 +1,11 @@
+---
+- name: Create template
+  template:
+    src: esxi_template.tf.j2
+    dest: "{{ project_path }}/esxi_template.tf"
+
+- name: Deploy system
+  community.general.terraform:
+    project_path: "{{ project_path }}"
+    state: "{{ terraform_state }}"
+    force_init: yes
