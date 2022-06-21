@@ -11,9 +11,9 @@ terraform {
     # We use the environment variables options
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
-    bucket = "vsphere-isos"
-    key = "esxi" 
-    region = "us-east-2"
+    bucket = "{{ state_bucket_name }}"
+    key = "{{ state_bucket_key }}"
+    region = "{{ aws_region }}"
   }
 }
 
@@ -22,7 +22,7 @@ provider "aws" {
     # We use the environment variables options
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
-  region = "us-east-2"
+  region = "{{ aws_region }}"
 }
 
 provider "metal" {
@@ -30,8 +30,11 @@ provider "metal" {
   # METAL_AUTH_TOKEN
 }
 
+data "metal_project" "esxi" {
+  name = "{{ project_name }}"
+}
+
 locals {
-  project_id = "f320c8de-44d8-44fe-ab34-6483ec381bd6"
   esxi_hosts = {
     "esxi01.dragonslair.dev" = {
       add_host = true
@@ -39,7 +42,7 @@ locals {
       domain = "dragonslair.dev"
     }
   }
-  facility = "dc13"
+  facility = "{{ facility_id }}"
 }
 
 data "aws_route53_zone" "domain" {
@@ -79,14 +82,14 @@ resource "tls_private_key" "esxi_host_key" {
 resource "metal_project_ssh_key" "esxi_host_key" {
   name       = "esxi_host_key"
   public_key = tls_private_key.esxi_host_key.public_key_openssh 
-  project_id = local.project_id
+  project_id = data.metal_project.esxi.id
 }
 
 
 resource "metal_reserved_ip_block" "esxi_ip_block" {
   facility = local.facility
   for_each = local.esxi_hosts
-  project_id = local.project_id
+  project_id = data.metal_project.esxi.id
   quantity = 16
 }
 
@@ -116,8 +119,8 @@ resource "metal_device" "esxi" {
   ip_address {
     type = "private_ipv4"
   }
-  operating_system =  "vmware_esxi_7_0"
+  operating_system =  "{{ operating_system }}"
   project_ssh_key_ids = [metal_project_ssh_key.esxi_host_key.id]
-  plan = "c3.small.x86"
-  project_id = local.project_id
+  plan = "{{ plan }}"
+  project_id = data.metal_project.esxi.id
 }

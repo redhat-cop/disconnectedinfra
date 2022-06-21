@@ -14,6 +14,10 @@
   register: terraform_init
   changed_when: terraform_init.rc != 0
   failed_when: terraform_init.rc >= 2
+  environment:
+    METAL_AUTH_TOKEN: "{{ metal_auth_token }}"
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
 
 - name: Deploy system
   ansible.builtin.command:
