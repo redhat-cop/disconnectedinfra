@@ -43,10 +43,11 @@ locals {
 }
 
 data "aws_route53_zone" "domain" {
-  name = "dragonslair.dev"
+  for_each = local.esxi_hosts
+  name = each.value.domain
 }
 
-resource "aws_route53_record" "esxi02" {
+resource "aws_route53_record" "esxi" {
   allow_overwrite = true
   for_each = local.esxi_hosts
   name = each.key
@@ -55,7 +56,19 @@ resource "aws_route53_record" "esxi02" {
   ]
   ttl = "300"
   type = "A"
-  zone_id = data.aws_route53_zone.domain.zone_id
+  zone_id = data.aws_route53_zone.domain[each.key].zone_id
+}
+
+resource "aws_route53_record" "vsphere" {
+  allow_overwrite = true
+  for_each = local.esxi_hosts
+  name = "vsphere.${each.value.domain}"
+  records = [
+    cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3)
+  ]
+  ttl = "300"
+  type = "A"
+  zone_id = data.aws_route53_zone.domain[each.key].zone_id
 }
 
 resource "tls_private_key" "esxi_host_key" {

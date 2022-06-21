@@ -11,6 +11,9 @@
     argv:
     - terraform
     - init
+  register: terraform_init
+  changed_when: terraform_init.rc != 0
+  failed_when: terraform_init.rc >= 2
 
 - name: Deploy system
   ansible.builtin.command:
@@ -20,5 +23,8 @@
     - terraform
     - "{{ terraform_state }}"
     - -auto-approve
+  register: terraform_result
+  changed_when: terraform_result.rc != 0
+  failed_when: terraform_result.rc >= 2
   environment:
     TF_VAR_root_password: "{{ root_password }}"
