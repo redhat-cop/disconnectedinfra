@@ -26,6 +26,7 @@
     src: "{{ dirs.artifact }}/vcsa70.tar.gz"
     dest: "{{ dirs.explode }}"
 
+#You must have libnsl installed (RHEL: yum install libnsl); not all systems default to this.  The execution environment has it
 - name: Install VCSA
   command: "{{ dirs.explode }}/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ dirs.config }}/{{ vcsa_config_file_name }}"
 
