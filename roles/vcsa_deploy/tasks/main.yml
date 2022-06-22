@@ -26,12 +26,6 @@
     src: "{{ dirs.artifact }}/vcsa70.tar.gz"
     dest: "{{ dirs.explode }}"
 
-- name: Install libsnl to use OVFTool on Enterprise Linux
-  yum:
-    name: libnsl
-    state: latest
-  become: true
-
 - name: Install VCSA
   command: "{{ dirs.explode }}/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ dirs.config }}/{{ vcsa_config_file_name }}"
 
