@@ -3,11 +3,11 @@
     "__comments": "Sample template to deploy a vCenter Server Appliance with an embedded Platform Services Controller on an ESXi host.",
     "new_vcsa": {
         "esxi": {
-            "hostname" "{{ esxi.hostname }}"
+            "hostname": "{{ esxi.hostname }}",
             "username": "{{ esxi_user.username }}",
-            "password": "{{ esxi_user.password }}"
+            "password": "{{ esxi_user.password }}",
             "deployment_network": "VM Network",
-            "datastore": "{{ esxi.datastore }}"
+            "datastore": "{{ esxi.datastore }}",
             "ssl_certificate_verification": {
                "verification_mode": "NONE"
              }
@@ -23,12 +23,12 @@
         "network": {
             "ip_family": "ipv4",
             "mode": "static",
-            "system_name": "{{ vcsa.system_name }}",
-            "ip": "{{ vcsa.ip.address }}",
-            "prefix": "{{ vcsa.ip.prefix }}",
-            "gateway": "{{ vcsa.ip.gateway }}",
+            "system_name": "{{ vcsa_system_name }}",
+            "ip": "{{ vcsa_ip_address }}",
+            "prefix": "{{ vcsa_ip_prefix }}",
+            "gateway": "{{ vcsa_ip_gateway }}",
             "dns_servers": [
-                "{{ vcsa.dns_servers }}"
+                "{{ vcsa_dns_servers }}"
             ]
         },
         "os": {
@@ -38,11 +38,8 @@
         },
         "sso": {
             "password": "{{ vsphere_user.password }}",
-            "domain_name": "{{ vcsa.sso_domain_name }}"
+            "domain_name": "{{ vcsa_sso_domain_name }}"
         }
-        "ssl_certificate_verification": {
-             "verification_mode": "NONE"
-         }
     },
     "ceip": {
         "description": {

@@ -1,23 +1,30 @@
 ---
+- name: Build config directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop: 
+   - "{{ dirs.config }}"
+   - "{{ dirs.artifact }}"
+   - "{{ dirs.explode }}"
+
 - name: Template file out
-  copy:
-    content: "{{ vcsa_esxi }}"
-    dest: "{{ config_directory }}/{{ vcsa_config_file_name }}"
+  template:
+    src: "embedded_vCSA_on_ESXi.json.j2"
+    dest: "{{ dirs.config }}/{{ vcsa_config_file_name }}"
 
-- name: Download VCSA ISO
-  get_url:
-    url: "{{ vcsa_iso_url }}" 
-    dest: /mnt/vcsa.iso
-  become: yes
+- name: Fetch archive of VCSA
+  amazon.aws.aws_s3:
+    bucket: "{{ vcsa_bucket }}"
+    object: "{{ vcsa_tar_name }}"
+    dest: "{{ dirs.artifact }}/{{ vcsa_tar_name }}"
+    mode: get
+    overwrite: different
 
-- name: Mount DVD's
-  mount:
-    path: /mnt/vcsa
-    src: /mnt/vcsa.iso
-    fstype: iso9660
-    opts: ro,noauto
-    state: mounted
-  become: true
+- name: Untar archive 
+  ansible.builtin.unarchive:
+    src: "{{ dirs.artifact }}/vcsa70.tar.gz"
+    dest: "{{ dirs.explode }}"
 
 - name: Install libsnl to use OVFTool on Enterprise Linux
   yum:
@@ -26,29 +33,28 @@
   become: true
 
 - name: Install VCSA
-  command: "/mnt/vcsa/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ config_directory }}/{{ vcsa_config_file_name }}"
+  command: "{{ dirs.explode }}/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ dirs.config }}/{{ vcsa_config_file_name }}"
 
 - ansible.builtin.pause:
     minutes: 5
 
 - name: Add a datacenter
-  vmware_datacenter:
-    hostname: "{{ vcsa_build.vcenter_ip }}"
-    username: "administrator@{{ vcsa_build.vcenter_system_name }}" 
-    password: "{{ vcsa_build.vcenter_password }}" 
-    validate_certs: no
-    datacenter_name: Datacenter
+  vmware.vmware_rest.vcenter_datacenter:
+    vcenter_hostname: "{{ vcsa_system_name }}"
+    vcenter_username: "{{ vsphere_user.username }}" 
+    vcenter_password: "{{ vsphere_user.password }}" 
+    vcenter_validate_certs: no
+    name: Datacenter
     state: present
 
 - name: Add an ESXi host
-  vmware_host:
-    hostname: "{{ vcsa_build.vcenter_ip }}"
-    username: "administrator@{{ vcsa_build.vcenter_system_name }}" 
-    password: "{{ vcsa_build.vcenter_password }}" 
-    validate_certs: no
-    datacenter_name: Datacenter
-    folder: /Datacenter/host
-    esxi_hostname: "{{ vcsa_build.esxi_hostname }}"
-    esxi_username: root
-    esxi_password: "{{ vcsa_build.esxi_password }}"
+  vmware.vmware_rest.vcenter_host:
+    vcenter_hostname: "{{ vcsa_system_name }}"
+    vcenter_username: "{{ vsphere_user.username }}"
+    vcenter_password: "{{ vsphere_user.password }}" 
+    vcenter_validate_certs: no
+    thumbprint_verification: NONE
+    hostname: "{{ esxi.hostname }}"
+    user_name: "{{ esxi_user.username }}"
+    password: "{{ esxi_user.password }}"
     state: present
