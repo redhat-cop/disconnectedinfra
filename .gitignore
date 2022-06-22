@@ -3,3 +3,4 @@
 .terraform/
 packer_cache/
 output_vsphere/
+context/

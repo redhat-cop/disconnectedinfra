@@ -33,24 +33,24 @@
 - ansible.builtin.pause:
     minutes: 5
 
-- name: Add a datacenter
-  vmware.vmware_rest.vcenter_datacenter:
-    vcenter_hostname: "{{ vcsa_system_name }}"
-    vcenter_username: "{{ vsphere_user.username }}" 
-    vcenter_password: "{{ vsphere_user.password }}" 
-    vcenter_validate_certs: no
-    folder: Datacenters
-    name: Datacenter
-    state: present
-
-- name: Add an ESXi host
-  vmware.vmware_rest.vcenter_host:
-    vcenter_hostname: "{{ vcsa_system_name }}"
-    vcenter_username: "{{ vsphere_user.username }}"
-    vcenter_password: "{{ vsphere_user.password }}" 
-    vcenter_validate_certs: no
-    thumbprint_verification: NONE
-    hostname: "{{ esxi.hostname }}"
-    user_name: "{{ esxi_user.username }}"
-    password: "{{ esxi_user.password }}"
-    state: present
+  - name: Create Datacenter
+    community.vmware.vmware_datacenter:
+      hostname: "{{ vcsa_system_name }}"
+      username: "{{ vsphere_user.username }}" 
+      password: "{{ vsphere_user.password }}" 
+      datacenter_name: Datacenter
+      state: present
+      validate_certs: no
+  
+  - name: Add ESXi Host to vCenter
+    community.vmware.vmware_host:
+      hostname: "{{ vcsa_system_name }}"
+      username: "{{ vsphere_user.username }}"
+      password: "{{ vsphere_user.password }}" 
+      datacenter: Datacenter
+      esxi_hostname: "{{ esxi.hostname }}"
+      esxi_username: "{{ esxi_user.username }}"
+      esxi_password: "{{ esxi_user.password }}"
+      state: present
+      validate_certs: no
+      folder: /Datacenter/host
