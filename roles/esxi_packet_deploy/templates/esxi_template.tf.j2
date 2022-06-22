@@ -74,6 +74,18 @@ resource "aws_route53_record" "vsphere" {
   zone_id = data.aws_route53_zone.domain[each.key].zone_id
 }
 
+resource "aws_route53_record" "gateway" {
+  allow_overwrite = true
+  for_each = local.esxi_hosts
+  name = "gateway.${each.value.domain}"
+  records = [
+    cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,1)
+  ]
+  ttl = "300"
+  type = "A"
+  zone_id = data.aws_route53_zone.domain[each.key].zone_id
+}
+
 resource "tls_private_key" "esxi_host_key" {
   algorithm = "RSA"
   rsa_bits  = 4096

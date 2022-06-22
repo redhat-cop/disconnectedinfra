@@ -28,7 +28,7 @@
     - "{{ terraform_state }}"
     - -auto-approve
   register: terraform_result
-  changed_when: terraform_result.rc != 0
+  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_result.stdout'
   failed_when: terraform_result.rc >= 2
   environment:
     TF_VAR_root_password: "{{ root_password }}"
