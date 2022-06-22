@@ -44,6 +44,7 @@
     vcenter_username: "{{ vsphere_user.username }}" 
     vcenter_password: "{{ vsphere_user.password }}" 
     vcenter_validate_certs: no
+    folder: Datacenters
     name: Datacenter
     state: present
 
