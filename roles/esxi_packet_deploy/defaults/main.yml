@@ -10,6 +10,6 @@ project_name: disconnect.blue
 facility_id: dc13
 project_path: "{{ playbook_dir }}"
 operating_system: vmware_esxi_7_0
-plan: c3.small.x86
+plan: c3.medium.x86
 terraform_state: apply
 root_password: BadPassword1234$
