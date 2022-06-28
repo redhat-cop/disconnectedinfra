@@ -1,5 +1,6 @@
 ---
-- hosts: packer
+- hosts: localhost
+  connection: local
 
   tasks:
   - name: Create images
