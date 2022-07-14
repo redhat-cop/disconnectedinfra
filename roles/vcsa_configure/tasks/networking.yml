@@ -1,0 +1,26 @@
+---
+- name: Create dvSwitch
+  community.vmware.vmware_dvswitch:
+    discovery_proto: disabled
+    datacenter_name: "{{ vsphere.datacenter }}"
+    uplink_quantity: 1
+    switch_name: "{{ vsphere.switch }}"
+    version: 6.6.0
+  environment: "{{ vsphere_env }}"
+
+- name: Add host to dvSwitch
+  community.vmware.vmware_dvs_host:
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    switch_name: "{{ vsphere.switch }}"
+    state: present
+  environment: "{{ vsphere_env }}"
+
+- name: Add portgroup to dvSwitch
+  community.vmware.vmware_dvs_portgroup:
+    portgroup_name: "{{ vsphere.portgroupname }}"
+    vlan_id: 120
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+    switch_name: "{{ vsphere.switch }}"
+  environment: "{{ vsphere_env }}"

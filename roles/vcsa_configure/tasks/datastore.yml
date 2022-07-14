@@ -1,0 +1,42 @@
+---
+- name: Query Datastore Facts
+  community.vmware.vmware_host_disk_info:
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"       
+  environment: "{{ vsphere_env }}"
+  register: esxidatastorefacts
+
+- name: Identify the data drives
+  set_fact:
+    datadrives: "{{ esxidatastorefacts.hosts_disk_info['esxi01.dragonslair.dev'] | selectattr('canonical_name', 'search', drive_type) | map(attribute='canonical_name') }}"
+
+- name: Create Data Drive Datastores
+  community.vmware.vmware_host_datastore:
+    esxi_hostname: "{{ vsphere.esxi_hostname }}"
+    datastore_name: "DATA0{{ ansible_loop.index }}"
+    datastore_type: vmfs 
+    vmfs_device_name: "{{ item }}"
+    vmfs_version: 6
+  environment: "{{ vsphere_env }}"
+  loop: "{{ datadrives }}"
+  loop_control:
+    extended: yes
+
+- name: Create Data Drive Datastore Cluster
+  community.vmware.vmware_datastore_cluster:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    datastore_cluster_name: DATACLUSTER
+    enable_sdrs: True
+    automation_level: automated
+    enable_io_loadbalance: yes
+  environment: "{{ vsphere_env }}"
+
+- name: Add datastores to NVME Cluster
+  community.vmware.vmware_datastore_cluster_manager:
+    datacenter_name: "{{ vsphere.datacenter }}"
+    datastore_cluster_name: DATACLUSTER
+    datastores: "DATA0{{ ansible_loop.index }}"
+    state: present 
+  environment: "{{ vsphere_env }}"
+  loop: "{{ datadrives }}"
+  loop_control:
+    extended: yes
