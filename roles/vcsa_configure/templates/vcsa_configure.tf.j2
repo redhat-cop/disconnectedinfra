@@ -1,0 +1,73 @@
+variable "vsphere" {}
+variable "aws" {}
+variable "backend" {}
+
+terraform {
+  required_providers {
+    vsphere = {
+      source = "hashicorp/vsphere"
+      version = "2.2.0"
+    }
+  }
+  backend "s3" {}
+}
+
+provider "vsphere" {
+  user                 = var.vsphere.username
+  password             = var.vsphere.password
+  vsphere_server       = var.vsphere.vcenter_server
+  allow_unverified_ssl = var.vsphere.allow_unverified_ssl
+}
+
+resource "vsphere_datacenter" "datacenter" {
+  name = var.vsphere.datacenter
+}
+
+resource "vsphere_host" "esxi" {
+  hostname = var.vsphere.esxi_hostname
+  username = var.vsphere.esxi_username
+  password = var.vsphere.esxi_password
+  cluster = vsphere_compute_cluster.cluster.id
+}
+
+resource "vsphere_compute_cluster" "cluster" {
+  name            = var.vsphere.cluster
+  datacenter_id   = vsphere_datacenter.datacenter.moid
+  host_managed    = true
+
+  drs_enabled          = true
+  drs_automation_level = "fullyAutomated"
+
+  ha_enabled = true
+}
+
+data "vsphere_vmfs_disks" "vmfs_disks" {
+  host_system_id = vsphere_host.esxi.id
+  rescan         = true
+  filter         = "naa"
+}
+
+resource "vsphere_vmfs_datastore" "datastore" {
+  name           = var.vsphere.datastore
+  host_system_id = vsphere_host.esxi.id
+
+  disks = data.vsphere_vmfs_disks.vmfs_disks.disks
+}
+
+resource "vsphere_distributed_virtual_switch" "switch" {
+  name          = var.vsphere.switch
+  datacenter_id = vsphere_datacenter.datacenter.moid
+  version       = "7.0.0"
+
+  
+  host {
+    host_system_id = vsphere_host.esxi.id
+  }
+}
+
+resource "vsphere_distributed_port_group" "portgroup" {
+  name                            = var.vsphere.portgroupname
+  distributed_virtual_switch_uuid = vsphere_distributed_virtual_switch.switch.id
+
+  vlan_id = 120
+}
