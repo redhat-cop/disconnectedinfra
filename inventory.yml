@@ -5,8 +5,12 @@ all:
         localhost:
       vars:
         ansible_connection: local
+        ansible_python_intepreter: /usr/bin/python3
         config_directory: /build_config
         artifact_directory: /build_artifact
+        awx:
+          controller_host: "{{ lookup('env', 'TOWER_HOST') }}"
+          controller_oauth_token: "{{ lookup('env', 'TOWER_OAUTH_TOKEN') }}" 
         backend:
           bucket: vsphere-isos
           key: vsphere_configure 
