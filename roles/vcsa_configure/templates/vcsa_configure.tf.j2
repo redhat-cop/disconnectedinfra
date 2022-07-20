@@ -23,11 +23,17 @@ resource "vsphere_datacenter" "datacenter" {
   name = var.vsphere.datacenter
 }
 
+data "vsphere_host_thumbprint" "thumbprint" {
+  address = var.vsphere.esxi_hostname
+  insecure = true
+}
+
 resource "vsphere_host" "esxi" {
   hostname = var.vsphere.esxi_hostname
   username = var.vsphere.esxi_username
   password = var.vsphere.esxi_password
   cluster = vsphere_compute_cluster.cluster.id
+  thumbprint = data.vsphere_host_thumbprint.thumbprint
 }
 
 resource "vsphere_compute_cluster" "cluster" {
