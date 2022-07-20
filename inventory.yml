@@ -17,7 +17,7 @@ all:
         aws:
           aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
           aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-          aws_default_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') }}"
+          aws_default_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') | default('us-east-2',true) }}"
         vsphere:
           vcenter_server: vsphere.dragonslair.dev
           allow_unverified_ssl: true
