@@ -1,53 +1,50 @@
 ---
+- name: Create a working directory
+  file:
+    path: "{{ config_directory }}"
+    state: directory
+
 - name: Create template
   template:
-    src: "{{ item }}.j2"
-    dest: "{{ project_path }}/{{ item }}"
-  loop: "{{ lookup('ansible.builtin.fileglob', '*.j2', wantlist=True) | map('splitext') | map('first') }}"
+    src: "{{ item | splitext | first }}.j2"
+    dest: "{{ config_directory }}/{{ item | basename | splitext | first }}"
+  loop: "{{ lookup('ansible.builtin.fileglob', 'templates/*.j2', wantlist=True) }}"
 
 - name: Terraform Init
   ansible.builtin.command:
   args:
-    chdir: "{{ project_path }}"
+    chdir: "{{ config_directory }}"
     argv:
     - terraform
     - init
     - -backend-config=backend.conf
     - -input=false
-  register: terraform_init
-  changed_when: terraform_init.rc != 0
-  failed_when: terraform_init.rc >= 2
-  environment:
-    METAL_AUTH_TOKEN: "{{ metal_auth_token }}"
-    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+  register: terraform_init_result
+  changed_when: terraform_init_result.rc != 0
+  failed_when: terraform_init_result.stderr | length > 0
 
 - name: Terraform Plan
   ansible.builtin.command:
   args:
-    chdir: "{{ project_path }}"
+    chdir: "{{ config_directory }}"
     argv:
     - terraform
     - plan
     - -out=tfplan
     - -input=false
-  register: terraform_result
-  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_result.stdout'
-  failed_when: terraform_result.rc != 0
-  environment:
-    TF_VAR_root_password: "{{ root_password }}"
+  register: terraform_plan_result
+  changed_when: '"no changes are needed" not in terraform_plan_result.stdout'
+  failed_when: terraform_plan_result.stderr | length > 0
 
 - name: Terraform Apply
   ansible.builtin.command:
   args:
-    chdir: "{{ project_path }}"
+    chdir: "{{ config_directory }}"
     argv:
     - terraform
     - apply
     - -input=false
     - tfplan
-  register: terraform_result
-  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_result.stdout'
-  failed_when: terraform_result.rc != 2
-  environment:
-    TF_VAR_root_password: "{{ root_password }}"
+  register: terraform_apply_result
+  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_apply_result.stdout'
+  failed_when: terraform_apply_result.stderr | length > 0
