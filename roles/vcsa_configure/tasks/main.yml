@@ -1,8 +1,53 @@
 ---
-- ansible.builtin.import_tasks: cluster.yml
-- ansible.builtin.import_tasks: networking.yml 
-- ansible.builtin.import_tasks: datastore.yml
-    
-  
+- name: Create template
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ project_path }}/{{ item }}"
+  loop: "{{ lookup('ansible.builtin.fileglob', '*.j2', wantlist=True) | map('splitext') | map('first') }}"
 
+- name: Terraform Init
+  ansible.builtin.command:
+  args:
+    chdir: "{{ project_path }}"
+    argv:
+    - terraform
+    - init
+    - -backend-config=backend.conf
+    - -input=false
+  register: terraform_init
+  changed_when: terraform_init.rc != 0
+  failed_when: terraform_init.rc >= 2
+  environment:
+    METAL_AUTH_TOKEN: "{{ metal_auth_token }}"
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
 
+- name: Terraform Plan
+  ansible.builtin.command:
+  args:
+    chdir: "{{ project_path }}"
+    argv:
+    - terraform
+    - plan
+    - -out=tfplan
+    - -input=false
+  register: terraform_result
+  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_result.stdout'
+  failed_when: terraform_result.rc != 0
+  environment:
+    TF_VAR_root_password: "{{ root_password }}"
+
+- name: Terraform Apply
+  ansible.builtin.command:
+  args:
+    chdir: "{{ project_path }}"
+    argv:
+    - terraform
+    - apply
+    - -input=false
+    - tfplan
+  register: terraform_result
+  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_result.stdout'
+  failed_when: terraform_result.rc != 2
+  environment:
+    TF_VAR_root_password: "{{ root_password }}"
