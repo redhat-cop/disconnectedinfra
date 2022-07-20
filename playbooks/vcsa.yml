@@ -1,6 +1,5 @@
 ---
-- hosts: localhost
-  connection: local
+- hosts: build
 
   tasks:
   - include_role:
