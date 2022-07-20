@@ -33,7 +33,7 @@ resource "vsphere_host" "esxi" {
   username = var.vsphere.esxi_username
   password = var.vsphere.esxi_password
   cluster = vsphere_compute_cluster.cluster.id
-  thumbprint = data.vsphere_host_thumbprint.thumbprint
+  thumbprint = data.vsphere_host_thumbprint.thumbprint.id
 }
 
 resource "vsphere_compute_cluster" "cluster" {
