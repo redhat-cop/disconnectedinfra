@@ -30,9 +30,6 @@
 - name: Install VCSA
   command: "{{ dirs.explode }}/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula {{ dirs.config }}/{{ vcsa_config_file_name }}"
 
-- ansible.builtin.pause:
-    minutes: 5
-
 - name: Create Datacenter
   community.vmware.vmware_datacenter:
     hostname: "{{ vcsa_system_name }}"
@@ -41,16 +38,16 @@
     datacenter_name: Datacenter
     state: present
     validate_certs: no
+  register: datacenter_creation
+  until: datacenter_creation is not failed 
+  retries: 60
+  delay: 10
 
-- name: Add ESXi Host to vCenter
-  community.vmware.vmware_host:
+- name: Remove Datacenter
+  community.vmware.vmware_datacenter:
     hostname: "{{ vcsa_system_name }}"
-    username: "{{ vsphere_user.username }}"
+    username: "{{ vsphere_user.username }}" 
     password: "{{ vsphere_user.password }}" 
-    datacenter: Datacenter
-    esxi_hostname: "{{ esxi.hostname }}"
-    esxi_username: "{{ esxi_user.username }}"
-    esxi_password: "{{ esxi_user.password }}"
-    state: present
+    datacenter_name: Datacenter
+    state: absent
     validate_certs: no
-    folder: /Datacenter/host
