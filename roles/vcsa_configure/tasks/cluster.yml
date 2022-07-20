@@ -1,4 +1,9 @@
 ---
+- name: Add a datacenter through REST
+  vmware.vmware_rest.vcenter_datacenter:
+    name: "{{ vsphere.datacenter }}"
+  environment: "{{ vsphere_env }}"
+
 - name: Add a datacenter
   community.vmware.vmware_datacenter:
     datacenter_name: "{{ vsphere.datacenter }}"
@@ -15,7 +20,7 @@
     #Unfortunately, this module also controls DRS, just without
     #documentating it; ignore_drs tells it to surrender control      
     #Without this, both of these tasks will always say changed
-    ignore_drs: true 
+    #ignore_drs: true 
   environment: "{{ vsphere_env }}"
 
 - name: Add an cluster to the datacenter
@@ -28,5 +33,5 @@
   community.vmware.vmware_cluster_drs:
     datacenter_name: "{{ vsphere.datacenter }}"
     cluster_name: "{{ vsphere.cluster }}"
-    enable_drs: true
+    enable:  true
   environment: "{{ vsphere_env }}"
