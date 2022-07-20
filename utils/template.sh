@@ -2,7 +2,32 @@
 #!/bin/bash
 #To cleanup the generated templates and terraform state
 delete () {
-ansible-playbook -i ~/disconnectedinfra/inventory.yml template.yml -t never
+ansible-playbook -i ~/disconnectedinfra/inventory.yml -t never /dev/stdin << EOF
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    files: "{{ lookup('ansible.builtin.fileglob', '$(pwd)/*.j2', wantlist=True) | map('splitext') | map('first') }}"
+    terraform_files:
+    - $(pwd)/.terraform
+    - $(pwd)/.terraform.lock.hcl
+    - $(pwd)/tfplan
+
+  tasks:
+  - template:
+      src: "{{ item }}.j2"
+      dest: "{{ item }}"
+    loop: "{{ files }}"
+
+  - file:
+      name: "{{ item }}"
+      state: absent
+    loop: "{{ files + terraform_files }}"
+    tags:
+    - never
+EOF
 }
 #To initialize terraform
 init () {
@@ -17,7 +42,6 @@ terraform apply -input=false tfplan
 }
 #To create the templates
 template () {
-echo "Start test"
 ansible-playbook -i ~/disconnectedinfra/inventory.yml /dev/stdin << EOF
 ---
 - hosts: localhost
@@ -25,7 +49,7 @@ ansible-playbook -i ~/disconnectedinfra/inventory.yml /dev/stdin << EOF
   gather_facts: false
 
   vars:
-    files: "{{ lookup('ansible.builtin.fileglob', '*.j2', wantlist=True) | map('splitext') | map('first') }}"
+    files: "{{ lookup('ansible.builtin.fileglob', '$(pwd)/*.j2', wantlist=True) | map('splitext') | map('first') }}"
     terraform_files:
     - .terraform
     - .terraform.lock.hcl
@@ -44,7 +68,6 @@ ansible-playbook -i ~/disconnectedinfra/inventory.yml /dev/stdin << EOF
     tags:
     - never
 EOF
-echo "Ran template"
 }
 
 # Get the options
