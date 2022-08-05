@@ -1,0 +1,2 @@
+config_directory: "/build_config"
+project_path: "{{ playbook_dir }}"

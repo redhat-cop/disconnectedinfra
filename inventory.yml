@@ -1,0 +1,55 @@
+all:
+  children:
+    build:
+      hosts:
+        localhost:
+      vars:
+        ansible_connection: local
+        ansible_python_intepreter: /usr/bin/python3
+        config_directory: "{{ playbook_dir }}/build_config"
+        artifact_directory: /build_artifact
+        awx:
+          controller_host: "{{ lookup('env', 'TOWER_HOST') }}"
+          controller_oauth_token: "{{ lookup('env', 'TOWER_OAUTH_TOKEN') }}" 
+        backend:
+          bucket: vsphere-isos
+          key: vsphere_configure 
+        aws:
+          aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+          aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+          aws_default_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') | default('us-east-2',true) }}"
+        vsphere:
+          vcenter_server: vsphere.dragonslair.dev
+          allow_unverified_ssl: true
+          cluster: main
+          datacenter: Datacenter
+          datastore: Datastore1
+          folder: Templates
+          network: BUILDNET
+          username: administrator@vsphere.dragonslair.dev
+          password: BadPassword1234$
+          esxi_hostname: esxi01.dragonslair.dev
+          esxi_username: root
+          esxi_password: BadPassword1234$
+          switch: DISCONNECTED
+          portgroupname: BUILDNET
+        terraform_vars_file:
+          vsphere: "{{ vsphere }}"
+          aws: "{{ aws }}"
+          backend: "{{ backend }}"
+        env:
+          VMWARE_USER: "{{ vsphere.username }}"
+          VMWARE_PASSWORD: "{{ vsphere.password }}"
+          VMWARE_HOST: "{{ vsphere.vcenter_server }}"
+          VMWARE_VALIDATE_CERTS: "{{ vsphere.validate_certs }}"
+          RHSM_PASSWORD: testpassword
+          PACKER_CACHE_DIR: "{{ artifact_directory }}"
+        digital_ocean_spaces_env:
+          AWS_ACCESS_KEY_ID: "{{ lookup('env', 'DIGITAL_OCEAN_SPACES_ACCESS_KEY')  }}"
+          AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'DIGITAL_OCEAN_SPACES_SECRET_KEY') }}"
+        bucket: dragonslayer
+        file_path: ova/021220/021220
+        vsphere_env: "{{ env }}"
+        packer_default:
+          variables:
+            ssh_username: vyos

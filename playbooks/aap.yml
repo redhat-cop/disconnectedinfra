@@ -1,0 +1,85 @@
+---
+- hosts: build
+
+  tasks:
+  - name: Create a job template
+    awx.awx.job_template:
+      name: VCSA Configure
+      job_type: run
+      organization: Default
+      inventory: VMWare
+      project: DisconnectedHoldenInfra
+      playbook: playbooks/vcsa_configure.yml
+      execution_environment: Terraform
+      credentials:
+      - HoldenAWS
+    environment: "{{ awx }}"
+
+  - name: Add an inventory source
+    awx.awx.inventory_source:
+      name: Project Inventory
+      description: Sourced from git
+      overwrite: True
+      update_on_launch: True
+      organization: Default
+      inventory: VMWare
+      source: scm
+      source_path: inventory.yml
+      source_project: DisconnectedHoldenInfra
+    environment: "{{ awx }}"
+
+  
+  - awx.awx.credential_type:
+      name: Digital Ocean Spaces Key
+      description: Credentials type for Digital Ocean Spaces
+      kind: cloud
+      inputs:
+        fields:
+        - id: spaces_access_key
+          type: string
+          label: Access Key
+        - id: spaces_secret_key
+          type: string
+          label: Secret Access Key
+          secret: true
+        - id: description
+          type: string
+          label: Description
+        required:
+        - spaces_access_key
+        - spaces_secret_key
+      injectors:
+        env: 
+          SPACES_ACCESS_KEY: "{{ '{{' }} spaces_access_key {{ '}}' }}"
+          SPACES_SECRET_KEY: "{{ '{{' }} spaces_secret_key {{ '}}' }}"
+      state: present
+    environment: "{{ awx }}"
+
+  - name: Create a credential
+    awx.awx.credential:
+      name: Holden Digital Ocean Spaces
+      credential_type: Digital Ocean Spaces Key
+      organization: Default
+      inputs:
+        spaces_access_key: "{{ digital_ocean_spaces_env.AWS_ACCESS_KEY_ID  }}"
+        spaces_secret_key: "{{ digital_ocean_spaces_env.AWS_SECRET_ACCESS_KEY }}"
+    environment: "{{ awx }}"
+
+  - name: Launch a project with a timeout of 10 seconds
+    awx.awx.project_update:
+      project: "DisconnectedHoldenInfra"
+      timeout: 120
+    environment: "{{ awx }}"
+
+  - name: Launch a job with inventory and credential
+    awx.awx.job_launch:
+      job_template: "VCSA Configure"
+    register: job
+    environment: "{{ awx }}"
+
+  - name: Wait for job max 120s
+    awx.awx.job_wait:
+      job_id: "{{ job.id }}"
+      timeout: 120
+    environment: "{{ awx }}"
+

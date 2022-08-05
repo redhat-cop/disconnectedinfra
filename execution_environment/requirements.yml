@@ -1,0 +1,7 @@
+---
+collections:
+  - community.general
+  - amazon.aws
+  - vmware.vmware_rest 
+  - community.vmware
+  - awx.awx

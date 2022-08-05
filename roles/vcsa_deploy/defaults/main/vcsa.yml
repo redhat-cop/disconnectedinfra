@@ -1,77 +1,24 @@
-vcsa_iso_url: "{{ artifact_server }}/iso/VMware-VCSA-all-6.7.0-15132721.iso"
-vcsa_config_file_name: "{{ vcsa_build.vcenter_system_name }}.json"
-vcsa_build:
-  esxi_hostname: "{{ vsphere.esxi_hostname }}"
-  esxi_password: "{{ vsphere.esxi_password }}"
-  vcenter_ip: "{{ lookup('dig', 'vsphere.infrabuild.xyz') }}"
-  vcenter_prefix: 29
-  vcenter_gateway: "{{ lookup('dig', 'vsphere.infrabuild.xyz') + '/29') | ansible.netcommon.ipaddr('first_usable') }}"
-  vcenter_system_name: "{{ vsphere.vcenter_server }}"
-  vcenter_password: "{{ vsphere.password }}"
-  sso_password: "{{ vsphere.password }}"
-  sso_domain_name: "{{ vsphere.vcenter_server }}"
-vcsa_esxi:
-  __version: "2.13.0"
-  __comments: Sample template to deploy a vCenter Server Appliance with an embedded Platform Services Controller on an ESXi host
-  new_vcsa:
-    esxi:
-      hostname: "{{ vcsa_build.esxi_hostname }}"
-      username: root
-      password: "{{ vcsa_build.esxi_password }}"
-      deployment_network: VM Network
-      datastore: datastore1
-      ssl_certificate_verification:
-        verification_mode: NONE
-    appliance:
-      __comments: 
-      - You must provide the 'deployment_option' key with a value, which will affect the VCSA's configuration parameters, such as the VCSA's number of vCPUs, the memory size, the storage size, and the maximum numbers of ESXi hosts and VMs which can be managed. For a list of acceptable values, run the supported deployment sizes help, i.e. vcsa-deploy --supported-deployment-sizes
-      thin_disk_mode: true
-      deployment_option: small
-      name: VCSA
-      image_url_ssl_certificate_verification:
-        verification_mode: NONE
-    network:
-      ip_family: ipv4
-      mode: static
-      ip: "{{ vcsa_build.vcenter_ip }}"
-      dns_servers:
-      - 1.1.1.1
-      prefix: "{{ vcsa_build.vcenter_prefix }}"
-      gateway: "{{ vcsa_build.vcenter_gateway }}"
-      system_name: "{{ vcsa_build.vcenter_system_name }}"
-    os:
-      password: "{{ vcsa_build.vcenter_password }}"
-      ntp_servers: time.nist.gov
-      ssh_enable: true
-    sso:
-      password: "{{ vcsa_build.sso_password }}"
-      domain_name: "{{ vcsa_build.sso_domain_name }}"
-      ssl_certificate_verification:
-        verification_mode: NONE
-  ceip:
-    description:
-      __comments:
-      - ++++VMware Customer Experience Improvement Program (CEIP)++++
-      - VMware's Customer Experience Improvement Program (CEIP)
-      - provides VMware with information that enables VMware to 
-      - improve its products and services, to fix problems, 
-      - and to advise you on how best to deploy and use our 
-      - products. As part of CEIP, VMware collects technical 
-      - information about your organization's use of VMware 
-      - products and services on a regular basis in association 
-      - with your organization's VMware license key(s). This 
-      - information does not personally identify any individual.  
-      - ""
-      - Additional information regarding the data collected 
-      - through CEIP and the purposes for which it is used by 
-      - VMware is set forth in the Trust & Assurance Center at 
-      - http://www.vmware.com/trustvmware/ceip.html . If you 
-      - prefer not to participate in VMware's CEIP for this 
-      - product, you should disable CEIP by setting 
-      - 'ceip_enabled': false. You may join or leave VMware's 
-      - CEIP for this product at any time. Please confirm your 
-      - acknowledgement by passing in the parameter 
-      - --acknowledge-ceip in the command line.
-      - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    settings:
-      ceip_enabled: false
+dirs:
+  config: "{{ ansible_env.HOME }}/build_config"
+  artifact: "{{ ansible_env.HOME }}/build_artifact"
+  explode: "{{ ansible_env.HOME }}/build_explode"
+domain: dragonslair.dev
+esxi_user:
+  username: root
+  password: BadPassword1234$ 
+vsphere_user:
+  username: "administrator@vsphere.{{ domain }}"
+  password: BadPassword1234$
+  root_password: BadPassword1234$
+esxi:
+  hostname: "esxi01.{{ domain }}"
+  datastore: datastore1
+vcsa_system_name: "vsphere.{{ domain }}"
+vcsa_ip_address:  "{{ lookup('dig', vcsa_system_name ) }}"
+vcsa_ip_prefix: 29
+vcsa_ip_gateway:  "{{ lookup('dig', 'gateway.' + domain ) }}"
+vcsa_dns_servers: 1.1.1.1
+vcsa_sso_domain_name: "{{ vcsa_system_name }}"
+vcsa_bucket: vcsatar
+vcsa_tar_name: vcsa70.tar.gz
+vcsa_config_file_name: "{{ vcsa_system_name }}.json"

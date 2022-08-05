@@ -1,0 +1,138 @@
+variable "root_password" {}
+
+terraform {
+  required_providers {
+    metal = {
+      source  = "equinix/metal"
+    }
+  }
+  backend "s3" {
+    # Credentials sourced from defaults for S3 backend
+    # We use the environment variables options
+    # AWS_ACCESS_KEY_ID
+    # AWS_SECRET_ACCESS_KEY
+    bucket = "{{ state_bucket_name }}"
+    key = "{{ state_bucket_key }}"
+    region = "{{ aws_region }}"
+  }
+}
+
+provider "aws" {
+    # Credentials sourced from defaults for AWS
+    # We use the environment variables options
+    # AWS_ACCESS_KEY_ID
+    # AWS_SECRET_ACCESS_KEY
+  region = "{{ aws_region }}"
+}
+
+provider "metal" {
+  # Use environment variable for authentication
+  # METAL_AUTH_TOKEN
+}
+
+data "metal_project" "esxi" {
+  name = "{{ project_name }}"
+}
+
+locals {
+  esxi_hosts = {
+    "esxi01.dragonslair.dev" = {
+      add_host = true
+      dns_provider = "route53"
+      domain = "dragonslair.dev"
+    }
+  }
+  facility = "{{ facility_id }}"
+}
+
+data "aws_route53_zone" "domain" {
+  for_each = local.esxi_hosts
+  name = each.value.domain
+}
+
+resource "aws_route53_record" "esxi" {
+  allow_overwrite = true
+  for_each = local.esxi_hosts
+  name = each.key
+  records = [
+    cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2)
+  ]
+  ttl = "300"
+  type = "A"
+  zone_id = data.aws_route53_zone.domain[each.key].zone_id
+}
+
+resource "aws_route53_record" "vsphere" {
+  allow_overwrite = true
+  for_each = local.esxi_hosts
+  name = "vsphere.${each.value.domain}"
+  records = [
+    cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3)
+  ]
+  ttl = "300"
+  type = "A"
+  zone_id = data.aws_route53_zone.domain[each.key].zone_id
+}
+
+resource "aws_route53_record" "gateway" {
+  allow_overwrite = true
+  for_each = local.esxi_hosts
+  name = "gateway.${each.value.domain}"
+  records = [
+    cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,1)
+  ]
+  ttl = "300"
+  type = "A"
+  zone_id = data.aws_route53_zone.domain[each.key].zone_id
+}
+
+resource "tls_private_key" "esxi_host_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "metal_project_ssh_key" "esxi_host_key" {
+  name       = "esxi_host_key"
+  public_key = tls_private_key.esxi_host_key.public_key_openssh 
+  project_id = data.metal_project.esxi.id
+}
+
+
+resource "metal_reserved_ip_block" "esxi_ip_block" {
+  facility = local.facility
+  for_each = local.esxi_hosts
+  project_id = data.metal_project.esxi.id
+  quantity = 16
+}
+
+resource "metal_device" "esxi" {
+  billing_cycle = "hourly"
+  facilities = [ local.facility ]
+  for_each = local.esxi_hosts
+  hostname = each.key
+  connection {
+    host = self.network.0.address
+    password =  self.root_password
+    private_key = tls_private_key.esxi_host_key.private_key_openssh 
+    timeout = "10m"
+    type = "ssh"
+    user = "root"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "echo ${ var.root_password } | passwd --stdin"
+    ]
+  } 
+  ip_address {
+    cidr = 28
+    reservation_ids = [ metal_reserved_ip_block.esxi_ip_block[each.key].id ]
+    type = "public_ipv4"
+  }
+  ip_address {
+    type = "private_ipv4"
+  }
+  operating_system =  "{{ operating_system }}"
+  project_ssh_key_ids = [metal_project_ssh_key.esxi_host_key.id]
+  plan = "{{ plan }}"
+  project_id = data.metal_project.esxi.id
+}

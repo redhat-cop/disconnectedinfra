@@ -1,0 +1,34 @@
+---
+- name: Create template
+  template:
+    src: esxi_template.tf.j2
+    dest: "{{ project_path }}/esxi_template.tf"
+
+- name: Terraform initialize
+  ansible.builtin.command:
+  args:
+    chdir: "{{ project_path }}"
+    argv:
+    - terraform
+    - init
+  register: terraform_init
+  changed_when: terraform_init.rc != 0
+  failed_when: terraform_init.rc >= 2
+  environment:
+    METAL_AUTH_TOKEN: "{{ metal_auth_token }}"
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+
+- name: Deploy system
+  ansible.builtin.command:
+  args:
+    chdir: "{{ project_path }}"
+    argv:
+    - terraform
+    - "{{ terraform_state }}"
+    - -auto-approve
+  register: terraform_result
+  changed_when: '"Resources: 0 added, 0 changed, 0 destroyed." not in terraform_result.stdout'
+  failed_when: terraform_result.rc >= 2
+  environment:
+    TF_VAR_root_password: "{{ root_password }}"

@@ -4,8 +4,3 @@
   tasks:
   - include_role:
       name: vcsa_deploy
-    vars: 
-      vcsa_build: "{{ vcsa_var }}"
-    loop: "{{ vcsa_list }}"
-    loop_control:
-      loop_var: vcsa_var

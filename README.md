@@ -24,3 +24,6 @@ This repository is structured as an Ansible collection.
 1. 2 internet connected portgroups (A WAN and LAN).  We could also place the artifact collection host directly on the "WAN", but more infrastructure may be desirable on the artifact collection network.
 2. 3 disconnected portgroups (BASTION, SERVER, SHARED SERVICES).
 3. An artifact collection VM.
+
+## Building images
+`ansible-playbook -i ~/inventory playbooks/image_creation.yml`

@@ -1,5 +1,5 @@
 esxi_password: BadPassword1234$
-aws_domain: infrabuild.xyz
+aws_domain: "{{ aws.domain }}"
 cloudflare_domain: disconnect.blue
 terraform_state: present
 facility: dc13
@@ -17,8 +17,8 @@ esxi_vsphere:
         access_key: "{{ aws.access_key_id }}"
         secret_key: "{{ aws.secret_access_key }}"
     required_providers:
-      packet:
-        source: packethost/packet
+      metal:
+        source: equinix/metal
       cloudflare:
         source: cloudflare/cloudflare
   provider:
@@ -29,8 +29,8 @@ esxi_vsphere:
     cloudflare:
       email: "{{ cloudflare.account_email }}"
       api_key: "{{ cloudflare.account_api_key }}"
-    packet:
-      auth_token: "{{ equinox_metal.api_key }}"
+    metal:
+      auth_token: "{{ equinix_metal.api_key }}"
   data:
     aws_route53_zone:
       domain:
@@ -46,13 +46,13 @@ esxi_vsphere:
     cloudflare_hosts: "{{ cloudflare_hosts_template | default([]) }}" 
     add_host: "{{ add_host_template | default([]) }}"
   resource:
-    packet_reserved_ip_block:
+    metal_reserved_ip_block:
       esxi_ip_block:
         for_each: ${ local.esxi_hosts }
-        project_id: "{{ equinox_metal.project_id }}"
+        project_id: "{{ equinix_metal.project_id }}"
         facility: ${ local.facility }
         quantity: 16
-    packet_device:
+    metal_device:
       esxi:
         for_each: ${ local.esxi_hosts }
         hostname: ${ each.key }
@@ -61,18 +61,18 @@ esxi_vsphere:
         - dc13
         operating_system: vmware_esxi_6_7
         billing_cycle: hourly
-        project_id: "{{ equinox_metal.project_id }}"
+        project_id: "{{ equinix_metal.project_id }}"
         hardware_reservation_id: next-available
         ip_address:
         - type: public_ipv4
           cidr: 28
           reservation_ids:
-          - ${ packet_reserved_ip_block.esxi_ip_block[each.key].id }
+          - ${ metal_reserved_ip_block.esxi_ip_block[each.key].id }
         - type: private_ipv4
         connection:
           type: ssh
           user: root
-          private_key: "{{ equinox_metal.ssh_private_key }}"
+          private_key: "{{ equinix_metal.ssh_private_key }}"
           password: ${ self.root_password }
           host: ${ self.network.0.address }
           timeout: 10m
@@ -96,7 +96,7 @@ esxi_vsphere:
         type: A
         ttl: 300
         records:
-        - ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2) }
+        - ${ cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2) }
         allow_overwrite: true
       vsphere:
         for_each: ${ local.route53_hosts }
@@ -105,20 +105,20 @@ esxi_vsphere:
         type: A
         ttl: 300
         records:
-        - ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
+        - ${ cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
         allow_overwrite: true
     cloudflare_record:
       esxi:
         for_each: ${ local.cloudflare_hosts }
         zone_id: ${ data.cloudflare_zones.cloudflare_domain.zones[0].id }
         name: ${ each.key }
-        value: ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2) }
+        value: ${ cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,2) }
         type: A
         ttl: 300
       vsphere:
         for_each: ${ local.cloudflare_hosts }
         zone_id: ${ data.cloudflare_zones.cloudflare_domain.zones[0].id }
         name: vsphere.${ each.value.domain }
-        value: ${ cidrhost(packet_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
+        value: ${ cidrhost(metal_reserved_ip_block.esxi_ip_block[each.key].cidr_notation,3) }
         type: A
         ttl: 300

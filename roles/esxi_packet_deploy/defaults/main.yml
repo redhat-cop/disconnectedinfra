@@ -1,0 +1,15 @@
+---
+domain: dragonslair.dev
+metal_auth_token: "{{ lookup('env', 'METAL_AUTH_TOKEN') }}"
+aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+aws_region: us-east-2
+state_bucket_name: vsphere-isos
+state_bucket_key: esxi
+project_name: disconnect.blue
+facility_id: dc13
+project_path: "{{ playbook_dir }}"
+operating_system: vmware_esxi_7_0
+plan: c3.medium.x86
+terraform_state: apply
+root_password: BadPassword1234$
